@@ -31,7 +31,7 @@ cleanup_config() {
 
 # 📥 选择设备
 select_device() {
-	DEVICE=$(whiptail --title "OpenWrt 设备选择" --radiolist \
+	DEVICE=$(whiptail --title "OpenWrt 设备选择" --menu \
 	"请选择要编译的设备：" 15 60 2 \
 	"mx5300"  "Linksys MX5300 (IPQ807x)" ON \
 	"whw03v2" "Linksys WHW03 V2 (IPQ40xx)" OFF 3>&1 1>&2 2>&3)
@@ -60,8 +60,8 @@ select_device() {
 select_git_tag() {
 	GIT_TAG=$(whiptail --title "选择 OpenWrt 版本" --menu \
 	"请选择要编译的 OpenWrt Git Tag：" 12 60 2 \
-	"v24.10.0" "稳定版 v24.10.0" \
-	"v24.10.1" "最新版 v24.10.1" 3>&1 1>&2 2>&3)
+	"v24.10.0" "上一版 v24.10.0" \
+	"v24.10.1" "当前稳定版 v24.10.1" 3>&1 1>&2 2>&3)
 
 	echo "🔀 切换到 Git tag: $GIT_TAG"
 
