@@ -8,6 +8,7 @@ CONFIG_DIR="$HOME/Downloads/configs"
 BACKUP_DIR="$HOME/Downloads/backup"
 LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
+DATE_TAG=$(date +"%Y%m%d_%H%M")
 
 DEVICE=""
 OUTPUT_DIR=""
@@ -66,10 +67,16 @@ select_device() {
 		3>&1 1>&2 2>&3) || exit 1
 }
 
+make_clean() {
+	echo "🧹 Cleanning old bin folder..."
+	make clean
+}
+
 prepare_config() {
 	cp "$CONFIG_DIR/$DEVICE.config" .config
-	mkdir -p "$OUTPUT_BASE/$DEVICE"
-	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE"
+	mkdir -p "$OUTPUT_BASE/$DEVICE/$DATE_TAG"
+	#OUTPUT_DIR="$OUTPUT_BASE/$DEVICE"
+	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 
 	# Set ROOTFS output dir
 	sed -i "/^CONFIG_TARGET_ROOTFS_DIR=.*/d" .config
@@ -119,6 +126,7 @@ main() {
 	patch_device_files
 	patch_common_files
 	setup_local_feed
+ 	make_clean
 	prepare_config
 	detect_target_info
 	build_firmware
