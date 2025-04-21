@@ -106,6 +106,17 @@ detect_target_info() {
 	echo "📦 TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
 }
 
+target_summary() {
+	echo ""
+	echo "✅ To build firmware for: $DEVICE"
+	echo "📁 Firmware will save to: $OUTPUT_DIR"
+	echo "📦 Target:                $TARGET"
+	echo "📦 Subtarget:             $SUBTARGET"
+	echo "📦 Packages arch:         $ARCH_PACKAGES"
+	echo ""
+ 	sleep 2
+}
+
 build_firmware() {
 	echo "⚙️ Starting build for $DEVICE..."
 	make defconfig
@@ -145,6 +156,7 @@ main() {
 	setup_local_feed
 	prepare_config
 	detect_target_info
+ 	target_summary
 	build_firmware
 	copy_all_output
 	final_summary
