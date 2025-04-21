@@ -80,9 +80,6 @@ clean_source_tree() {
 
 prepare_config() {
 	cp "$CONFIG_DIR/$DEVICE.config" .config
-	mkdir -p "$OUTPUT_BASE/$DEVICE/$DATE_TAG"
-	#OUTPUT_DIR="$OUTPUT_BASE/$DEVICE"
-	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 
 	# Set ROOTFS output dir
 	sed -i "/^CONFIG_TARGET_ROOTFS_DIR=.*/d" .config
@@ -127,9 +124,15 @@ build_firmware() {
 	fi
 }
 
+make_output_folder() {
+	echo "📁 Making output folder..."
+	DATE_TAG=$(date +"%Y%m%d_%H%M")
+	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
+	mkdir -p "$OUTPUT_DIR"
+}
+
 copy_all_output() {
 	echo "📤 Copying firmware and packages..."
-	mkdir -p "$OUTPUT_DIR"
 	rsync -a bin/targets/"$TARGET"/"$SUBTARGET"/ "$OUTPUT_DIR/targets/"
 	rsync -a bin/packages/"$ARCH_PACKAGES"/ "$OUTPUT_DIR/packages/"
 }
@@ -158,6 +161,7 @@ main() {
 	detect_target_info
  	target_summary
 	build_firmware
+ 	make_output_folder
 	copy_all_output
 	final_summary
 }
