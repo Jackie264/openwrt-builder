@@ -14,6 +14,7 @@ OUTPUT_DIR=""
 ARCH_PACKAGES=""
 TARGET=""
 SUBTARGET=""
+GIT_TAG=""
 
 BACKUP_LIST=(
 	include/kernel-defaults.mk
@@ -77,6 +78,13 @@ clean_source_tree() {
 	fi
 }
 
+make_output_folder() {
+	echo "📁 Making output folder..."
+	DATE_TAG=$(date +"%Y%m%d_%H%M")
+	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
+	mkdir -p "$OUTPUT_DIR"
+}
+
 prepare_config() {
 	cp "$CONFIG_DIR/$DEVICE.config" .config
 
@@ -99,6 +107,8 @@ detect_target_info() {
 		exit 1
 	fi
 
+	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
+ 
 	echo "📦 TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
 }
 
@@ -109,6 +119,7 @@ target_summary() {
 	echo "📦 Target:                $TARGET"
 	echo "📦 Subtarget:             $SUBTARGET"
 	echo "📦 Packages arch:         $ARCH_PACKAGES"
+ 	echo "🔖 Git Tag:               $GIT_TAG"
 	echo ""
  	sleep 2
 }
@@ -121,13 +132,6 @@ build_firmware() {
 		echo "⚠️ Multithread build failed. Retrying with single thread..."
 		make V=s -j1
 	fi
-}
-
-make_output_folder() {
-	echo "📁 Making output folder..."
-	DATE_TAG=$(date +"%Y%m%d_%H%M")
-	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
-	mkdir -p "$OUTPUT_DIR"
 }
 
 copy_all_output() {
@@ -143,11 +147,11 @@ final_summary() {
 	echo "📦 Target:             $TARGET"
 	echo "📦 Subtarget:          $SUBTARGET"
 	echo "📦 Packages arch:      $ARCH_PACKAGES"
+ 	echo "🔖 Git Tag:            $GIT_TAG"
 }
 
 main() {
 	cd "$BUILD_DIR"
-
 	trap restore_original_files EXIT
 
 	select_device
@@ -156,11 +160,11 @@ main() {
 	patch_device_files
 	patch_common_files
 	setup_local_feed
+ 	make_output_folder
 	prepare_config
 	detect_target_info
  	target_summary
 	build_firmware
- 	make_output_folder
 	copy_all_output
 	final_summary
 }
