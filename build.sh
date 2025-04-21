@@ -148,6 +148,8 @@ final_summary() {
 	echo "📦 Subtarget:          $SUBTARGET"
 	echo "📦 Packages arch:      $ARCH_PACKAGES"
  	echo "🔖 Git Tag:            $GIT_TAG"
+  	echo ""
+   	sleep 5
 }
 
 main() {
