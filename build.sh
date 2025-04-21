@@ -8,7 +8,6 @@ CONFIG_DIR="$HOME/Downloads/configs"
 BACKUP_DIR="$HOME/Downloads/backup"
 LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
-DATE_TAG=$(date +"%Y%m%d_%H%M")
 
 DEVICE=""
 OUTPUT_DIR=""
