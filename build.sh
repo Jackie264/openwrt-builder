@@ -83,6 +83,8 @@ make_output_folder() {
 	DATE_TAG=$(date +"%Y%m%d_%H%M")
 	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 	mkdir -p "$OUTPUT_DIR"
+ 
+ 	ln -sfn "$DATE_TAG" "$OUTPUT_BASE/$DEVICE/latest"
 }
 
 prepare_config() {
@@ -110,6 +112,15 @@ detect_target_info() {
 	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
  
 	echo "📦 TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
+}
+
+generate_distfeeds_conf() {
+	echo "📝 Generating custom distfeeds.conf for $DEVICE..."
+
+	cat > package/base-files/files/etc/opkg/distfeeds.conf <<EOF
+src/gz mykmod http://your-server/$DEVICE/latest/targets/packages
+src/gz mypackages http://your-server/$DEVICE/latest/packages/mypackages
+EOF
 }
 
 target_summary() {
@@ -165,6 +176,7 @@ main() {
  	make_output_folder
 	prepare_config
 	detect_target_info
+ 	generate_distfeeds_conf
  	target_summary
 	build_firmware
 	copy_all_output
