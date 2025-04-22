@@ -118,8 +118,8 @@ generate_distfeeds_conf() {
 	echo "📝 Generating custom distfeeds.conf for $DEVICE..."
 
 	cat > package/base-files/files/etc/opkg/distfeeds.conf <<EOF
-src/gz mykmod http://your-server/$DEVICE/latest/targets/packages
-src/gz mypackages http://your-server/$DEVICE/latest/packages/mypackages
+src/gz mykmod https://downloads.sh-mtgc.com/$DEVICE/latest/targets/packages
+src/gz mypackages https://downloads.sh-mtgc.com/$DEVICE/latest/packages/mypackages
 EOF
 }
 
