@@ -8,6 +8,7 @@ CONFIG_DIR="$HOME/Downloads/configs"
 BACKUP_DIR="$HOME/Downloads/backup"
 LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
+MYFEED_URL="downloads.sh-mtgc.com"
 
 DEVICE=""
 OUTPUT_DIR=""
@@ -118,8 +119,8 @@ generate_distfeeds_conf() {
 	echo "📝 Generating custom distfeeds.conf for $DEVICE..."
 
 	cat > package/base-files/files/etc/opkg/distfeeds.conf <<EOF
-src/gz mykmod https://downloads.sh-mtgc.com/$DEVICE/latest/targets/packages
-src/gz mypackages https://downloads.sh-mtgc.com/$DEVICE/latest/packages/mypackages
+src/gz mykmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
+src/gz mypackages https://$MYFEED_URL/$DEVICE/latest/packages/mypackages
 EOF
 }
 
