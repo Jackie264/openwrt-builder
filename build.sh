@@ -119,8 +119,8 @@ generate_distfeeds_conf() {
 	echo "📝 Generating custom distfeeds.conf for $DEVICE..."
 
 	cat > package/base-files/files/etc/opkg/distfeeds.conf <<EOF
-src/gz mykmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
-src/gz mypackages https://$MYFEED_URL/$DEVICE/latest/packages/mypackages
+src/gz my_kmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
+src/gz my_packages https://$MYFEED_URL/$DEVICE/latest/packages/mypackages
 EOF
 }
 
