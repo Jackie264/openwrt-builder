@@ -118,7 +118,7 @@ detect_target_info() {
 
 	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
  
-	echo "📦 TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
+	echo "📦 GIT TAG=$GIT_TAG TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
 }
 
 generate_customfeeds_conf() {
