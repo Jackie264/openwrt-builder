@@ -121,10 +121,10 @@ detect_target_info() {
 	echo "📦 TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
 }
 
-generate_distfeeds_conf() {
-	echo "📝 Generating custom distfeeds.conf for $DEVICE..."
+generate_customfeeds_conf() {
+	echo "📝 Generating customfeeds.conf for $DEVICE..."
 
-	cat > package/base-files/files/etc/opkg/distfeeds.conf <<EOF
+	cat > package/system/opkg/files/customfeeds.conf <<EOF
 src/gz my_kmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
 src/gz my_packages https://$MYFEED_URL/$DEVICE/latest/packages/mypackages
 EOF
@@ -183,7 +183,7 @@ main() {
  	make_output_folder
 	prepare_config
 	detect_target_info
- 	generate_distfeeds_conf
+ 	generate_customfeeds_conf
  	target_summary
 	build_firmware
 	copy_all_output
