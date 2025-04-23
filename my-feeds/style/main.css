@@ -1,0 +1,119 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; /* 常用 sans-serif 字体栈 */
+    margin: 0px;
+    padding: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.4;
+}
+
+.container {
+    max-width: 1024px; /* 设置内容最大宽度，根据需要调整 */
+    margin: 0 auto; /* 容器居中 */
+    background-color: #f4f4f4; /* 内容区域背景色 */
+    padding: 0px; /* 容器内部内边距 */
+    /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 可选：细微阴影 */
+    /* border: 1px solid #ccc; */ /* 可选：容器边框 */
+}
+
+h1 {
+    color: #333;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.2em;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: #ccc;
+    margin-top: 5px;
+    margin-bottom: 20px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 6px 10px;
+    text-align: left;
+    border: none;
+    font-size: 0.9em;
+}
+
+thead th {
+    background: linear-gradient(to bottom, #444, #222);
+    color: white;
+    font-weight: bold;
+    font-size: 0.8em;
+    border: 1px solid #111;
+    border-left: 1px solid #111; /* 左边框 */
+    border-right: 1px solid #111; /* 右边框 */
+    border-bottom: 1px solid #111;
+    text-shadow: 1px 1px 1px #000;
+    text-align: left;
+}
+
+tbody td {
+    border-left: 1px solid #ddd; /* 左边框 */
+    border-right: 1px solid #ddd; /* 右边框 */
+    /* 上下边框由 tbody tr 控制 */
+    border-top: none;
+    border-bottom: none;
+    font-size: 0.8em;
+}
+
+tbody tr {
+    border-bottom: 1px solid #ddd; /* 行之间的底边框 */
+}
+
+tbody tr:last-child {
+    border-bottom: none; /* 移除最后一行的底边框 */
+}
+
+/* Specific column widths */
+td:nth-child(1), thead th:nth-child(1) {
+    width: 60%; /* 文件名列宽 */
+    text-align: left;
+    border-left: 1px solid #ddd; /* 确保第一列有左边框 */
+}
+
+td:nth-child(2), thead th:nth-child(2) {
+    width: 15%; /* 文件大小列宽 */
+    white-space: nowrap;
+    text-align: right; /* <-- 右对齐 */
+}
+
+td:nth-child(3), thead th:nth-child(3) {
+    width: 25%; /* 日期列宽 */
+    white-space: nowrap;
+    text-align: right; /* <-- 右对齐 */
+    border-right: 1px solid #ddd; /* 确保最后一列有右边框 */
+}
+
+/* 调整表头和内容的垂直对齐 */
+th, td {
+    vertical-align: middle;
+}
+
+a {
+    text-decoration: none;
+    color: #0066cc;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Style for parent directory link */
+td a[href$="/../"],
+td a[href="/../"] {
+    font-weight: normal;
+    color: #0066cc;
+}
