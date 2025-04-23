@@ -84,8 +84,14 @@ make_output_folder() {
 	DATE_TAG=$(date +"%Y%m%d_%H%M")
 	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 	mkdir -p "$OUTPUT_DIR"
- 
- 	ln -sfn "$DATE_TAG" "$OUTPUT_BASE/$DEVICE/latest"
+	LINK_PATH="$OUTPUT_BASE/$DEVICE/latest"
+	ln -sfn "$DATE_TAG" "$LINK_PATH"
+
+	if [ -L "$LINK_PATH" ]; then
+		echo "🔗 'latest' symlink created → $LINK_PATH → $DATE_TAG"
+	else
+		echo "❌ Failed to create 'latest' symlink at $LINK_PATH"
+	fi
 }
 
 prepare_config() {
