@@ -84,7 +84,8 @@ make_output_folder() {
 	DATE_TAG=$(date +"%Y%m%d_%H%M")
 	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 	mkdir -p "$OUTPUT_DIR"
-	LINK_PATH="$OUTPUT_BASE/$DEVICE/latest"
+
+ 	LINK_PATH="$OUTPUT_BASE/$DEVICE/latest"
 	ln -sfn "$DATE_TAG" "$LINK_PATH"
 
 	if [ -L "$LINK_PATH" ]; then
@@ -166,8 +167,8 @@ final_summary() {
 	echo "📦 Subtarget:          $SUBTARGET"
 	echo "📦 Packages arch:      $ARCH_PACKAGES"
  	echo "🔖 Git Tag:            $GIT_TAG"
-  	echo ""
-   	sleep 5
+	echo ""
+	sleep 5
 }
 
 main() {
@@ -183,7 +184,7 @@ main() {
  	make_output_folder
 	prepare_config
 	detect_target_info
- 	generate_customfeeds_conf
+	generate_customfeeds_conf
  	target_summary
 	build_firmware
 	copy_all_output
