@@ -8,7 +8,7 @@ CONFIG_DIR="$HOME/Downloads/configs"
 BACKUP_DIR="$HOME/Downloads/backup"
 LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
-MYFEED_URL="downloads.sh-mtgc.com"
+MYFEED_URL="feeds.onenas.space"
 
 DEVICE=""
 OUTPUT_DIR=""
@@ -18,9 +18,9 @@ SUBTARGET=""
 GIT_TAG=""
 
 BACKUP_LIST=(
-	include/kernel-defaults.mk
-	package/base-files/files/bin/config_generate
-	feeds.conf.default
+	./include/kernel-defaults.mk
+	./package/base-files/files/bin/config_generate
+	./feeds.conf.default
 )
 
 # Clean up any temporary patch
@@ -42,14 +42,11 @@ backup_original_files() {
 }
 
 patch_device_files() {
-	echo "🧩 Applying device-specific files for $DEVICE..."
+	echo "🧩 Applying all patch files for $DEVICE..."
+ 	cp "$CONFIG_DIR/config.$DEVICE" ./.config
 	cp "$CONFIG_DIR/vermagic.$DEVICE" ./vermagic
-	cp "$CONFIG_DIR/config_generate.$DEVICE" package/base-files/files/bin/config_generate
-}
-
-patch_common_files() {
-	echo "🧩 Patching common files..."
-	cp "$CONFIG_DIR/kernel-defaults.mk" include/kernel-defaults.mk
+	cp "$CONFIG_DIR/config_generate.$DEVICE" ./package/base-files/files/bin/config_generate
+ 	cp "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
 }
 
 setup_local_feed() {
@@ -62,10 +59,32 @@ setup_local_feed() {
 }
 
 select_device() {
-	DEVICE=$(whiptail --title "Select Device" --menu "Choose a device to build:" 15 50 3 \
+	local base_device
+	base_device=$(whiptail --title "Select Device" --menu "Choose a device to build:" 15 50 3 \
 		"mx5300" "Linksys MX5300 (IPQ807x)" \
 		"whw03v2" "Linksys WHW03 v2 (IPQ40xx)" \
 		3>&1 1>&2 2>&3) || exit 1
+  
+	case "$base_device" in
+		mx5300)
+			DEVICE="mx5300"
+			;;
+
+		whw03v2)
+			local sub_scene
+			sub_scene=$(whiptail --title "WHW03V2 Configuration" --menu "Select deployment profile:" 12 50 2 \
+				"home"   "Home network" \
+				"office" "Office network" \
+				3>&1 1>&2 2>&3) || exit 1
+
+			DEVICE="$sub_scene.whw03v2"
+			;;
+
+		*)
+			echo "Invalid selection"
+			exit 1
+			;;
+	esac
 }
 
 clean_source_tree() {
@@ -96,9 +115,7 @@ make_output_folder() {
 }
 
 prepare_config() {
-	cp "$CONFIG_DIR/$DEVICE.config" .config
-
-	# Set ROOTFS output dir
+	echo "📦 Setting ROOTFS output dir..."
 	sed -i "/^CONFIG_TARGET_ROOTFS_DIR=.*/d" .config
 	echo "CONFIG_TARGET_ROOTFS_DIR=\"$OUTPUT_DIR\"" >> .config
 }
@@ -179,7 +196,6 @@ main() {
 	backup_original_files
 	clean_source_tree
 	patch_device_files
-	patch_common_files
 	setup_local_feed
  	make_output_folder
 	prepare_config
