@@ -54,6 +54,17 @@ patch_device_files() {
  	install -m 644 "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
 }
 
+update_local_feeds() {
+	echo "🔄 Updating local packages in $LOCAL_FEED_DIR..."
+
+	for dir in "$LOCAL_FEED_DIR"/*; do
+		if [ -d "$dir/.git" ]; then
+			echo "➡️  Pulling updates in $(basename "$dir") ..."
+			git -C "$dir" pull --ff-only || echo "⚠️  Failed to update $(basename "$dir")"
+		fi
+	done
+}
+
 setup_local_feed() {
 	echo "📦 Setting up local feed..."
 	if ! grep -q "$FEED_NAME" feeds.conf.default; then
@@ -200,6 +211,7 @@ main() {
  	set_vermagic_key
 	backup_original_files
 	clean_source_tree
+ 	update_local_feeds
 	patch_device_files
 	setup_local_feed
  	make_output_folder
