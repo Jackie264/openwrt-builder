@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# Note: install -m 644/755 is used only in patch_device_files to preserve expected permissions.
 set -e
 
 BUILD_DIR="$HOME/Downloads/openwrt-24.10"
@@ -41,12 +41,17 @@ backup_original_files() {
 	done
 }
 
+set_vermagic_key() {
+	VERMAGIC_KEY=$(echo "$DEVICE" | awk -F. '{print $NF}')
+}
+
 patch_device_files() {
 	echo "🧩 Applying all patch files for $DEVICE..."
- 	cp "$CONFIG_DIR/config.$DEVICE" ./.config
-	cp "$CONFIG_DIR/vermagic.$DEVICE" ./vermagic
-	cp "$CONFIG_DIR/config_generate.$DEVICE" ./package/base-files/files/bin/config_generate
- 	cp "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
+ 
+ 	install -m 644 "$CONFIG_DIR/config.$DEVICE" ./.config
+	install -m 644 "$CONFIG_DIR/vermagic.$VERMAGIC_KEY" ./vermagic
+	install -m 755 "$CONFIG_DIR/config_generate.$DEVICE" ./package/base-files/files/bin/config_generate
+ 	install -m 644 "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
 }
 
 setup_local_feed() {
@@ -122,7 +127,6 @@ prepare_config() {
 
 detect_target_info() {
 	echo "🔍 Detecting target info..."
-
 	local config_file=".config"
 
 	TARGET=$(grep -oP '^CONFIG_TARGET_BOARD="\K[^"]+' "$config_file")
@@ -193,6 +197,7 @@ main() {
 	trap restore_original_files EXIT
 
 	select_device
+ 	set_vermagic_key
 	backup_original_files
 	clean_source_tree
 	patch_device_files
