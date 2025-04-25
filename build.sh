@@ -68,9 +68,14 @@ update_local_feeds() {
 
 setup_local_feed() {
 	echo "📦 Setting up local feed..."
-	if ! grep -q "$FEED_NAME" feeds.conf.default; then
-		echo "src-link $FEED_NAME $LOCAL_FEED_DIR" >> feeds.conf.default
+ 
+	if ! grep -q "src-link -f $FEED_NAME" feeds.conf.default; then
+		echo "src-link -f $FEED_NAME $LOCAL_FEED_DIR" >> feeds.conf.default
+		echo "✅ Added feed: $FEED_NAME (excluded from distfeeds)"
+	else
+		echo "ℹ️ Local feed $FEED_NAME already exists in feeds.conf.default"
 	fi
+ 
 	./scripts/feeds update -a
 	./scripts/feeds install -a
 }
@@ -153,6 +158,9 @@ detect_target_info() {
 	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
 	IPADDR=$(grep -oP 'lan\)\s+ipad=\$\{ipaddr:-"\K[^"]+' package/base-files/files/bin/config_generate | head -n1)
 
+ 	source include/kernel-version.mk
+	KERNEL_VERSION="$LINUX_VERSION-$LINUX_RELEASE"
+
 	if [[ -z "$TARGET" || -z "$SUBTARGET" || -z "$ARCH_PACKAGES" ]]; then
 		echo "❌ Failed to detect TARGET, SUBTARGET, or ARCH_PACKAGES"
 		exit 1
@@ -163,10 +171,14 @@ detect_target_info() {
 
 generate_customfeeds_conf() {
 	echo "📝 Generating customfeeds.conf for $DEVICE..."
+ 
+	local KMODS_URL="https://downloads.openwrt.org/releases/$GIT_TAG/targets/$TARGET/$SUBTARGET/kmods/$KERNEL_VERSION-$VERMAGIC_KEY"
 
 	cat > package/system/opkg/files/customfeeds.conf <<EOF
 src/gz my_kmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
 src/gz my_packages https://$MYFEED_URL/$DEVICE/latest/packages/mypackages
+src/gz openwrt_kmods $KMODS_URL
+
 EOF
 }
 
