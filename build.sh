@@ -8,14 +8,15 @@ CONFIG_DIR="$HOME/Downloads/configs"
 BACKUP_DIR="$HOME/Downloads/backup"
 LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
-MYFEED_URL="feeds.onenas.space"
 
+MYFEED_URL=""
 DEVICE=""
 OUTPUT_DIR=""
 ARCH_PACKAGES=""
 TARGET=""
 SUBTARGET=""
 GIT_TAG=""
+IPADDR=""
 
 BACKUP_LIST=(
 	./include/kernel-defaults.mk
@@ -84,6 +85,7 @@ select_device() {
 	case "$base_device" in
 		mx5300)
 			DEVICE="mx5300"
+   			MYFEED_URL="feeds.onenas.fun"
 			;;
 
 		whw03v2)
@@ -94,6 +96,11 @@ select_device() {
 				3>&1 1>&2 2>&3) || exit 1
 
 			DEVICE="$sub_scene.whw03v2"
+			if [ "$sub_scene" = "home" ]; then
+				MYFEED_URL="feeds.onenas.fun"
+			else
+				MYFEED_URL="feeds.sh-mtgc.com"
+			fi
 			;;
 
 		*)
@@ -143,15 +150,15 @@ detect_target_info() {
 	TARGET=$(grep -oP '^CONFIG_TARGET_BOARD="\K[^"]+' "$config_file")
 	SUBTARGET=$(grep -oP '^CONFIG_TARGET_SUBTARGET="\K[^"]+' "$config_file")
 	ARCH_PACKAGES=$(grep -oP '^CONFIG_TARGET_ARCH_PACKAGES="\K[^"]+' "$config_file")
+	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
+	IPADDR=$(grep -oP 'lan\)\s+ipad=\$\{ipaddr:-"\K[^"]+' package/base-files/files/bin/config_generate | head -n1)
 
 	if [[ -z "$TARGET" || -z "$SUBTARGET" || -z "$ARCH_PACKAGES" ]]; then
 		echo "❌ Failed to detect TARGET, SUBTARGET, or ARCH_PACKAGES"
 		exit 1
 	fi
-
-	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
  
-	echo "📦 GIT TAG=$GIT_TAG TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES"
+	echo "📦 GIT TAG=$GIT_TAG TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES | IP=$IPADDR"
 }
 
 generate_customfeeds_conf() {
@@ -170,6 +177,7 @@ target_summary() {
 	echo "📦 Target:                $TARGET"
 	echo "📦 Subtarget:             $SUBTARGET"
 	echo "📦 Packages arch:         $ARCH_PACKAGES"
+ 	echo "🌐 Default IP:            $IPADDR"
  	echo "🔖 Git Tag:               $GIT_TAG"
 	echo ""
  	sleep 2
@@ -198,6 +206,8 @@ final_summary() {
 	echo "📦 Target:             $TARGET"
 	echo "📦 Subtarget:          $SUBTARGET"
 	echo "📦 Packages arch:      $ARCH_PACKAGES"
+ 	echo "🌐 Default IP:         $IPADDR"
+ 	echo "🌐 Feed Source:        $MYFEED_URL"
  	echo "🔖 Git Tag:            $GIT_TAG"
 	echo ""
 	sleep 5
