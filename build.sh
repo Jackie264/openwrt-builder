@@ -91,8 +91,8 @@ select_device() {
 		whw03v2)
 			local sub_scene
 			sub_scene=$(whiptail --title "WHW03V2 Configuration" --menu "Select deployment profile:" 12 50 2 \
-				"home"   "Home network" \
-				"office" "Office network" \
+				"home"   "Home Enviroment" \
+				"office" "Office Enviroment" \
 				3>&1 1>&2 2>&3) || exit 1
 
 			DEVICE="$sub_scene.whw03v2"
