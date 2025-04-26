@@ -9,6 +9,7 @@ CONFIG_DIR="$HOME/Downloads/configs"
 BACKUP_DIR="$HOME/Downloads/backup"
 LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
+KERNEL_VERSION="6.6.86-1"
 
 MYFEED_URL=""
 DEVICE=""
@@ -69,9 +70,9 @@ update_local_feeds() {
 setup_local_feed() {
 	echo "📦 Setting up local feed..."
  
-	if ! grep -q "src-link -f $FEED_NAME" feeds.conf.default; then
-		echo "src-link -f $FEED_NAME $LOCAL_FEED_DIR" >> feeds.conf.default
-		echo "✅ Added feed: $FEED_NAME (excluded from distfeeds)"
+	if ! grep -q "src-link $FEED_NAME" feeds.conf.default; then
+		echo "src-link $FEED_NAME $LOCAL_FEED_DIR" >> feeds.conf.default
+		echo "✅ Added feed: $FEED_NAME"
 	else
 		echo "ℹ️ Local feed $FEED_NAME already exists in feeds.conf.default"
 	fi
@@ -90,7 +91,7 @@ select_device() {
 	case "$base_device" in
 		mx5300)
 			DEVICE="mx5300"
-   			MYFEED_URL="feeds.onenas.fun"
+			MYFEED_URL="feeds.onenas.fun"
 			;;
 
 		whw03v2)
@@ -148,6 +149,14 @@ prepare_config() {
 	echo "CONFIG_TARGET_ROOTFS_DIR=\"$OUTPUT_DIR\"" >> .config
 }
 
+make_deconfig() {
+	echo "⚙️ Running make defconfig..."
+	make defconfig || {
+		echo "❌ make defconfig failed!"
+		exit 1
+	}
+}
+
 detect_target_info() {
 	echo "🔍 Detecting target info..."
 	local config_file=".config"
@@ -158,8 +167,6 @@ detect_target_info() {
 	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
 	IPADDR=$(grep -oP 'lan\)\s+ipad=\$\{ipaddr:-"\K[^"]+' package/base-files/files/bin/config_generate | head -n1)
 
- 	source include/kernel-version.mk
-	KERNEL_VERSION="$LINUX_VERSION-$LINUX_RELEASE"
 
 	if [[ -z "$TARGET" || -z "$SUBTARGET" || -z "$ARCH_PACKAGES" ]]; then
 		echo "❌ Failed to detect TARGET, SUBTARGET, or ARCH_PACKAGES"
@@ -182,6 +189,26 @@ src/gz openwrt_kmods $KMODS_URL
 EOF
 }
 
+generate_distfeeds_conf() {
+	echo "📝 Creating package/system/opkg/files/distfeeds.conf file..."
+	local distfeeds_file="package/system/opkg/files/distfeeds.conf"
+
+	mkdir -p $(dirname "$distfeeds_file")
+
+	cat > "$distfeeds_file" <<EOF
+src/gz openwrt_core https://downloads.openwrt.org/releases/$GIT_TAG/targets/$TARGET/$SUBTARGET/packages
+src/gz openwrt_base https://downloads.openwrt.org/releases/$GIT_TAG/packages/$ARCH_PACKAGES/base
+src/gz openwrt_luci https://downloads.openwrt.org/releases/$GIT_TAG/packages/$ARCH_PACKAGES/luci
+src/gz openwrt_packages https://downloads.openwrt.org/releases/$GIT_TAG/packages/$ARCH_PACKAGES/packages
+src/gz openwrt_routing https://downloads.openwrt.org/releases/$GIT_TAG/packages/$ARCH_PACKAGES/routing
+src/gz openwrt_telephony https://downloads.openwrt.org/releases/$GIT_TAG/packages/$ARCH_PACKAGES/telephony
+
+EOF
+	echo "✅ Created $distfeeds_file , only include original Feed source"
+	echo "ℹ️  This will cover OpenWrt default distfeeds.conf"
+	sleep 5
+}
+
 target_summary() {
 	echo ""
 	echo "✅ To build firmware for: $DEVICE"
@@ -197,7 +224,7 @@ target_summary() {
 
 build_firmware() {
 	echo "⚙️ Starting build for $DEVICE..."
-	make defconfig
+
 	make download -j$(nproc)
 	if ! make V=s -j$(nproc); then
 		echo "⚠️ Multithread build failed. Retrying with single thread..."
@@ -222,22 +249,26 @@ final_summary() {
  	echo "🌐 Feed Source:        $MYFEED_URL"
  	echo "🔖 Git Tag:            $GIT_TAG"
 	echo ""
- 
+
 	local END_TIME=$(date +%s)
 	local DURATION=$((END_TIME - START_TIME))
 	local HOURS=$((DURATION / 3600))
 	local MINUTES=$(( (DURATION % 3600) / 60 ))
 	local SECONDS=$((DURATION % 60))
 	local DURATION_STRING=""
+
 	if [ "$HOURS" -gt 0 ]; then
 		DURATION_STRING+="${HOURS}h "
 	fi
-	if [ "$MINUTES" -gt 0 ] || [ "$HOURS" -gt 0 ]; then
+
+        if [ "$MINUTES" -gt 0 ] || [ "$HOURS" -gt 0 ]; then
 		DURATION_STRING+="${MINUTES}m "
 	fi
+
 	if [ "$HOURS" -gt 0 ] || [ "$MINUTES" -gt 0 ] || [ "$SECONDS" -gt 0 ]; then
 		DURATION_STRING+="${SECONDS}s"
 	fi
+
 	DURATION_STRING=$(echo "$DURATION_STRING" | sed 's/ $//')
 	if [ -z "$DURATION_STRING" ]; then
 		DURATION_STRING="0s"
@@ -245,10 +276,9 @@ final_summary() {
 
 	local FINISH_TIME_CST=$(TZ='Asia/Shanghai' date --date="@$END_TIME" +'%Y-%m-%d %H:%M:%S %Z')
 
- 	echo "⏰ Build finish at:    $FINISH_TIME_CST"
- 	echo "⏱️ Total duration:     $DURATION_STRING"
-  	echo ""
-	sleep 5
+	echo "⏰ Build finished at:  $FINISH_TIME_CST"
+	echo "⏱️ Total duration:     $DURATION_STRING"
+	echo ""
 }
 
 main() {
@@ -264,7 +294,9 @@ main() {
 	setup_local_feed
  	make_output_folder
 	prepare_config
+	make_deconfig
 	detect_target_info
+	generate_distfeeds_conf
 	generate_customfeeds_conf
  	target_summary
 	build_firmware
