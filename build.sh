@@ -2,6 +2,7 @@
 # Note: install -m 644/755 is used only in patch_device_files to preserve expected permissions.
 set -e
 
+START_TIME=$(date +%s)
 BUILD_DIR="$HOME/Downloads/openwrt-24.10"
 OUTPUT_BASE="$HOME/Downloads/firmware"
 CONFIG_DIR="$HOME/Downloads/configs"
@@ -24,7 +25,6 @@ BACKUP_LIST=(
 	./feeds.conf.default
 )
 
-# Clean up any temporary patch
 restore_original_files() {
 	echo "🔁 Restoring original files..."
 	for file in "${BACKUP_LIST[@]}"; do
@@ -222,6 +222,32 @@ final_summary() {
  	echo "🌐 Feed Source:        $MYFEED_URL"
  	echo "🔖 Git Tag:            $GIT_TAG"
 	echo ""
+ 
+	local END_TIME=$(date +%s)
+	local DURATION=$((END_TIME - START_TIME))
+	local HOURS=$((DURATION / 3600))
+	local MINUTES=$(( (DURATION % 3600) / 60 ))
+	local SECONDS=$((DURATION % 60))
+	local DURATION_STRING=""
+	if [ "$HOURS" -gt 0 ]; then
+		DURATION_STRING+="${HOURS}h "
+	fi
+	if [ "$MINUTES" -gt 0 ] || [ "$HOURS" -gt 0 ]; then
+		DURATION_STRING+="${MINUTES}m "
+	fi
+	if [ "$HOURS" -gt 0 ] || [ "$MINUTES" -gt 0 ] || [ "$SECONDS" -gt 0 ]; then
+		DURATION_STRING+="${SECONDS}s"
+	fi
+	DURATION_STRING=$(echo "$DURATION_STRING" | sed 's/ $//')
+	if [ -z "$DURATION_STRING" ]; then
+		DURATION_STRING="0s"
+	fi
+
+	local FINISH_TIME_CST=$(TZ='Asia/Shanghai' date --date="@$END_TIME" +'%Y-%m-%d %H:%M:%S %Z')
+
+ 	echo "⏰ Build finish at:    $FINISH_TIME_CST"
+ 	echo "⏱️ Total duration:     $DURATION_STRING"
+  	echo ""
 	sleep 5
 }
 
@@ -242,8 +268,8 @@ main() {
 	generate_customfeeds_conf
  	target_summary
 	build_firmware
-	copy_all_output
 	final_summary
+	copy_all_output
 }
 
 main "$@"
