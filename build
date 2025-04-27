@@ -57,6 +57,26 @@ patch_device_files() {
 	install -m 644 "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
 }
 
+copy_firstboot_script() {
+	echo "📝 Installing firstboot script..."
+
+	local script_source="$CONFIG_DIR/cleanup-distfeeds.sh"
+	local script_dest_dir="package/base-files/files/etc/uci-defaults"
+	local script_dest_file="$script_dest_dir/99-cleanup-feeds"
+
+	if [ -f "$script_source" ]; then
+		mkdir -p "$script_dest_dir"
+		# 使用 install -m 755
+		install -m 755 "$script_source" "$script_dest_file"
+		echo "✅ Installed firstboot script to: $script_dest_file ,setting up permission 755"
+	else
+		echo "⚠️ firstboot script file not exists: $script_source"
+		echo "   Please create cleanup-distfeeds.sh under $CONFIG_DIR next time."
+		echo "   building will continue, but No feeds-cleaning will proceed."
+	fi
+	sleep 2
+}
+
 update_local_feeds() {
 	echo "🔄 Updating local packages in $LOCAL_FEED_DIR..."
 
@@ -200,26 +220,6 @@ EOF
 	sleep 5
 }
 
-generate_distfeeds_conf() {
-	echo "📝 Creating package/system/opkg/files/distfeeds.conf file..."
-	local distfeeds_file="package/system/opkg/files/distfeeds.conf"
-
-	mkdir -p $(dirname "$distfeeds_file")
-
-	cat > "$distfeeds_file" <<EOF
-src/gz openwrt_core https://$ORIGIN_URL/$GIT_TAG/targets/$TARGET/$SUBTARGET/packages
-src/gz openwrt_base https://$ORIGIN_URL/$GIT_TAG/packages/$ARCH_PACKAGES/base
-src/gz openwrt_luci https://$ORIGIN_URL/$GIT_TAG/packages/$ARCH_PACKAGES/luci
-src/gz openwrt_packages https://$ORIGIN_URL/$GIT_TAG/packages/$ARCH_PACKAGES/packages
-src/gz openwrt_routing https://$ORIGIN_URL/$GIT_TAG/packages/$ARCH_PACKAGES/routing
-src/gz openwrt_telephony https://$ORIGIN_URL/$GIT_TAG/packages/$ARCH_PACKAGES/telephony
-
-EOF
-	echo "✅ Created $distfeeds_file , only include original Feed source"
-	echo "ℹ️  This will cover OpenWrt default distfeeds.conf"
-	sleep 5
-}
-
 target_summary() {
 	echo ""
 	echo "✅ To build firmware for: $DEVICE"
@@ -302,12 +302,12 @@ main() {
 	clean_source_tree
 	update_local_feeds
 	patch_device_files
+	copy_firstboot_script
 	setup_local_feed
 	make_output_folder
 	prepare_config
 	make_deconfig
 	detect_target_info
-	generate_distfeeds_conf
 	generate_customfeeds_conf
 	target_summary
 	build_firmware
