@@ -103,15 +103,14 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
         r.append('<div class="container">')
         
         header_components = ['<h1>Index of ']
-        header_components.append('<a href="/">/</a>')
+        header_components.append('<a href="/">Home</a>')
 
         if display_url_path != '/':
             segments = display_url_path.strip('/').split('/')
             current_url_accumulator = '/'
 
             for i, segment in enumerate(segments):
-                separator = ' ' if i == 0 else ' / '
-                header_components.append(separator)
+                header_components.append(' / ')
                 escaped_segment = html.escape(segment)
                 quoted_segment_for_url = urllib.parse.quote(segment, errors='surrogateescape')
                 current_url_accumulator = urllib.parse.urljoin(current_url_accumulator, quoted_segment_for_url + '/')
