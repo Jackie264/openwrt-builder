@@ -187,9 +187,7 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 		r.append('</table>')
 
 		r.append('<p class="footer-info">Page content is automatically generated with <a href="https://www.python.org/">Python</a>.</p>')
-
 		r.append('<p class="footer">Copyright &copy; OneNAS.space</p>')
-
 		r.append('<script src="/style/sort.js"></script>')
 
 		r.append('</div>')
