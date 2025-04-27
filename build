@@ -272,7 +272,7 @@ final_summary() {
 		DURATION_STRING+="${HOURS}h "
 	fi
 
-        if [ "$MINUTES" -gt 0 ] || [ "$HOURS" -gt 0 ]; then
+	if [ "$MINUTES" -gt 0 ] || [ "$HOURS" -gt 0 ]; then
 		DURATION_STRING+="${MINUTES}m "
 	fi
 
