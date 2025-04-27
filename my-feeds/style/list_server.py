@@ -13,7 +13,7 @@ from socketserver import ThreadingMixIn
 import shutil
 
 LISTEN_PORT = 8001
-FILE_SERVER_ROOT = "/home/ubuntu/Downloads/firmware"
+FILE_SERVER_ROOT = "/mnt/firmware"
 CSS_URL = "/style/main.css"
 
 def human_readable_size(size_bytes):
@@ -107,7 +107,7 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 			current_url_accumulator = '/'
 			for i, segment in enumerate(segments):
 				separator = ' ' if i == 0 else ' / '
-				header_components.append(separator)
+				header_components.append(' / ')
 				escaped_segment = html.escape(segment)
 				quoted_segment_for_url = urllib.parse.quote(segment, errors='surrogateescape')
 				current_url_accumulator = urllib.parse.urljoin(current_url_accumulator, quoted_segment_for_url + '/')
@@ -186,7 +186,9 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 		r.append('</tbody>')
 		r.append('</table>')
 
-		r.append('<hr>')
+        r.append('<p class="footer-info">Page content is automatically generated with <a href="https://www.python.org/">Python</a>.</p>')
+
+		r.append('<p class="footer">Copyright &copy; OneNAS.space</p>')
 
 		r.append('<script src="/style/sort.js"></script>')
 
