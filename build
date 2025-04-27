@@ -51,10 +51,10 @@ set_vermagic_key() {
 patch_device_files() {
 	echo "🧩 Applying all patch files for $DEVICE..."
  
- 	install -m 644 "$CONFIG_DIR/config.$DEVICE" ./.config
+	install -m 644 "$CONFIG_DIR/config.$DEVICE" ./.config
 	install -m 644 "$CONFIG_DIR/vermagic.$VERMAGIC_KEY" ./vermagic
 	install -m 755 "$CONFIG_DIR/config_generate.$DEVICE" ./package/base-files/files/bin/config_generate
- 	install -m 644 "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
+	install -m 644 "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
 }
 
 update_local_feeds() {
@@ -134,7 +134,7 @@ make_output_folder() {
 	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 	mkdir -p "$OUTPUT_DIR"
 
- 	LINK_PATH="$OUTPUT_BASE/$DEVICE/latest"
+	LINK_PATH="$OUTPUT_BASE/$DEVICE/latest"
 	ln -sfn "$DATE_TAG" "$LINK_PATH"
 
 	if [ -L "$LINK_PATH" ]; then
@@ -227,10 +227,10 @@ target_summary() {
 	echo "📦 Target:                $TARGET"
 	echo "📦 Subtarget:             $SUBTARGET"
 	echo "📦 Packages arch:         $ARCH_PACKAGES"
- 	echo "🌐 Default IP:            $IPADDR"
- 	echo "🔖 Git Tag:               $GIT_TAG"
+	echo "🌐 Default IP:            $IPADDR"
+	echo "🔖 Git Tag:               $GIT_TAG"
 	echo ""
- 	sleep 2
+	sleep 2
 }
 
 build_firmware() {
@@ -256,9 +256,9 @@ final_summary() {
 	echo "📦 Target:             $TARGET"
 	echo "📦 Subtarget:          $SUBTARGET"
 	echo "📦 Packages arch:      $ARCH_PACKAGES"
- 	echo "🌐 Default IP:         $IPADDR"
- 	echo "🌐 Feed Source:        $MYFEED_URL"
- 	echo "🔖 Git Tag:            $GIT_TAG"
+	echo "🌐 Default IP:         $IPADDR"
+	echo "🌐 Feed Source:        $MYFEED_URL"
+	echo "🔖 Git Tag:            $GIT_TAG"
 	echo ""
 
 	local END_TIME=$(date +%s)
@@ -297,19 +297,19 @@ main() {
 	trap restore_original_files EXIT
 
 	select_device
- 	set_vermagic_key
+	set_vermagic_key
 	backup_original_files
 	clean_source_tree
- 	update_local_feeds
+	update_local_feeds
 	patch_device_files
 	setup_local_feed
- 	make_output_folder
+	make_output_folder
 	prepare_config
 	make_deconfig
 	detect_target_info
 	generate_distfeeds_conf
 	generate_customfeeds_conf
- 	target_summary
+	target_summary
 	build_firmware
 	final_summary
 	copy_all_output
