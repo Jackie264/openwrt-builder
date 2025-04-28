@@ -189,7 +189,7 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 		display_domain = "Unknown Host"
 		host_header = self.headers.get('Host')
 		if host_header:
-			domain_name = host_header.split(':')[0]
+			hostname = host_header.split(':')[0]
 			parts = hostname.split('.')
 			if len(parts) > 2:
 				main_domain = '.'.join(parts[-2:])
