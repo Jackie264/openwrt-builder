@@ -186,14 +186,14 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 		r.append('</tbody>')
 		r.append('</table>')
 
-        domain_name = "Unknown Host"
-        host_header = self.headers.get('Host')
-        if host_header:
-            domain_name = host_header.split(':')[0]
+		domain_name = "Unknown Host"
+		host_header = self.headers.get('Host')
+		if host_header:
+			domain_name = host_header.split(':')[0]
 
 		r.append('<p class="footer-info">Page content is automatically generated with <a href="https://www.python.org/">Python</a>.</p>')
 
-        current_year = datetime.datetime.now().year
+		current_year = datetime.datetime.now().year
 		r.append('<p class="footer">Copyright &copy; {current_year} {html.escape(domain_name)}</p>')
 		r.append('<script src="/style/sort.js"></script>')
 
