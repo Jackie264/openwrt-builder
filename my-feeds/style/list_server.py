@@ -13,7 +13,7 @@ from socketserver import ThreadingMixIn
 import shutil
 
 LISTEN_PORT = 8001
-FILE_SERVER_ROOT = "/mnt/firmware"
+FILE_SERVER_ROOT = "/home/ubuntu/Downloads/firmware"
 CSS_URL = "/style/main.css"
 
 def human_readable_size(size_bytes):
@@ -186,8 +186,15 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 		r.append('</tbody>')
 		r.append('</table>')
 
+        domain_name = "Unknown Host"
+        host_header = self.headers.get('Host')
+        if host_header:
+            domain_name = host_header.split(':')[0]
+
 		r.append('<p class="footer-info">Page content is automatically generated with <a href="https://www.python.org/">Python</a>.</p>')
-		r.append('<p class="footer">Copyright &copy; OneNAS.space</p>')
+
+        current_year = datetime.datetime.now().year
+		r.append('<p class="footer">Copyright &copy; {current_year} {html.escape(domain_name)}</p>')
 		r.append('<script src="/style/sort.js"></script>')
 
 		r.append('</div>')
