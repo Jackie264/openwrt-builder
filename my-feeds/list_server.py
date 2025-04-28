@@ -194,7 +194,7 @@ class CustomListingAndFileHandler(http.server.BaseHTTPRequestHandler):
 		r.append('<p class="footer-info">Page content is automatically generated with <a href="https://www.python.org/">Python</a>.</p>')
 
 		current_year = datetime.datetime.now().year
-		r.append('<p class="footer">Copyright &copy; {current_year} {html.escape(domain_name)}</p>')
+		r.append(f'<p class="footer">Copyright &copy; {current_year} {html.escape(domain_name)}</p>')
 		r.append('<script src="/style/sort.js"></script>')
 
 		r.append('</div>')
