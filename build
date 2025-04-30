@@ -186,6 +186,7 @@ detect_target_info() {
 	SUBTARGET=$(grep -oP '^CONFIG_TARGET_SUBTARGET="\K[^"]+' "$config_file")
 	ARCH_PACKAGES=$(grep -oP '^CONFIG_TARGET_ARCH_PACKAGES="\K[^"]+' "$config_file")
 	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
+	GIT_NOV_TAG=${GIT_TAG#v}
 	IPADDR=$(grep -oP 'lan\)\s+ipad=\$\{ipaddr:-"\K[^"]+' package/base-files/files/bin/config_generate | head -n1)
 
 
@@ -207,7 +208,7 @@ generate_customfeeds_conf() {
 
 		exit 1
 	fi
-	local KMODS_URL="https://$ORIGIN_URL/$GIT_TAG/targets/$TARGET/$SUBTARGET/kmods/$KERNEL_VERSION-$ABI_HASH"
+	local KMODS_URL="https://$ORIGIN_URL/$GIT_NOV_TAG/targets/$TARGET/$SUBTARGET/kmods/$KERNEL_VERSION-$ABI_HASH"
 
 	cat > package/system/opkg/files/customfeeds.conf <<EOF
 src/gz my_kmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
