@@ -11,6 +11,7 @@ LOCAL_FEED_DIR="$HOME/Downloads/package"
 FEED_NAME="mypackages"
 KERNEL_VERSION="6.6.86-1"
 ORIGIN_URL="downloads.openwrt.org/releases"
+BRANCH="openwrt-24.10"
 
 MYFEED_URL=""
 DEVICE=""
@@ -21,12 +22,68 @@ SUBTARGET=""
 GIT_TAG=""
 GIT_NOV_TAG=""
 IPADDR=""
+TARGET_TAG=""
 
 BACKUP_LIST=(
 	./include/kernel-defaults.mk
 	./package/base-files/files/bin/config_generate
 	./feeds.conf.default
 )
+
+select_git_target() {
+	if [ -z "$BRANCH" ]; then
+		echo "❌ Can not fetch tags, because of BRANCH not set up"
+		exit 1
+	fi
+
+	echo "🌐 Fetching tags of '$BRANCH' from remote Repository..."
+	local current_dir=$(pwd)
+	cd "$BUILD_DIR" || { echo "❌ Can not entering $BUILD_DIR ！"; exit 1; }
+
+	local tags=$(git ls-remote --tags origin "$BRANCH" 2>/dev/null | sed 's#^.*refs/tags/##')
+	local tag_list=""
+	local tag_count=0
+
+	if [ -z "$tags" ]; then
+		echo "⚠️ Can not find tags of '$BRANCH'."
+		echo "   Can not build with target tag."
+		cd "$current_dir"
+		exit 1
+	fi
+
+	for tag in $tags; do
+		tag_list+="$tag \"\" "
+		tag_count=$((tag_count + 1))
+	done
+
+	cd "$current_dir"
+
+	TARGET_TAG=$(whiptail --title "Select the TAG of '$BRANCH'" --menu "Please choose the TAG:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
+	echo "✅ Selected: $TARGET_TAG"
+}
+
+setup_git_repository() {
+	echo "🛠️ 正在设置 Git 仓库状态..."
+
+	echo "🔄 正在切换到分支: $BRANCH" # 使用硬编码的 BRANCH
+	git checkout "$BRANCH" || { echo "❌ 切换到分支 $BRANCH 失败！"; exit 1; }
+
+	echo "⬇️ 正在拉取分支 '$BRANCH' 的最新改动..."
+	git pull || { echo "⚠️ Git pull 失败！请检查网络连接或手动处理冲突。将使用当前分支状态。"; } # 失败时警告并继续
+
+	select_git_target
+
+	echo "😴 暂停 2 秒..."
+	sleep 2
+
+	echo "🏷️ 正在切换到标签: $TARGET_TAG" # 使用用户选择的 TARGET_TAG
+	git checkout "$TARGET_TAG" || { echo "❌ 切换到标签 $TARGET_TAG 失败！"; exit 1; }
+
+	echo "🗑️ 正在将 BACKUP_LIST 中的跟踪文件恢复到标签状态..."
+	git restore "${BACKUP_LIST[@]}" || { echo "⚠️ git restore 恢复文件失败，请检查 BACKUP_LIST 中的文件是否存在于 $TARGET_TAG 中。将使用当前文件状态。"; }
+
+	echo "✅ Git 仓库状态设置完成."
+}
 
 restore_original_files() {
 	echo "🔁 Restoring original files..."
@@ -296,11 +353,11 @@ final_summary() {
 
 main() {
 	cd "$BUILD_DIR"
-	trap restore_original_files EXIT
-
+	# trap restore_original_files EXIT
+	setup_git_repository
 	select_device
 	set_vermagic_key
-	backup_original_files
+	# backup_original_files
 	clean_source_tree
 	update_local_feeds
 	patch_device_files
