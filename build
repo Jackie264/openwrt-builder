@@ -63,26 +63,26 @@ select_git_target() {
 }
 
 setup_git_repository() {
-	echo "🛠️ 正在设置 Git 仓库状态..."
+	echo "🛠️ Setting up Git repository..."
 
-	echo "🔄 正在切换到分支: $BRANCH" # 使用硬编码的 BRANCH
-	git checkout "$BRANCH" || { echo "❌ 切换到分支 $BRANCH 失败！"; exit 1; }
+	echo "🔄 Git checkout: $BRANCH"
+	git checkout "$BRANCH" || { echo "❌ Failed to checkout $BRANCH "; exit 1; }
 
-	echo "⬇️ 正在拉取分支 '$BRANCH' 的最新改动..."
-	git pull || { echo "⚠️ Git pull 失败！请检查网络连接或手动处理冲突。将使用当前分支状态。"; } # 失败时警告并继续
+	echo "⬇️ Pulling new commits of '$BRANCH' ..."
+	git pull || { echo "⚠️ Filed to Git pull!"; }
 
 	select_git_target
 
-	echo "😴 暂停 2 秒..."
+	echo "😴 Pause 2 secends..."
 	sleep 2
 
-	echo "🏷️ 正在切换到标签: $TARGET_TAG" # 使用用户选择的 TARGET_TAG
-	git checkout "$TARGET_TAG" || { echo "❌ 切换到标签 $TARGET_TAG 失败！"; exit 1; }
+	echo "🏷️ Git checkout: $TARGET_TAG"
+	git checkout "$TARGET_TAG" || { echo "❌ Failed to checkout $TARGET_TAG "; exit 1; }
 
-	echo "🗑️ 正在将 BACKUP_LIST 中的跟踪文件恢复到标签状态..."
-	git restore "${BACKUP_LIST[@]}" || { echo "⚠️ git restore 恢复文件失败，请检查 BACKUP_LIST 中的文件是否存在于 $TARGET_TAG 中。将使用当前文件状态。"; }
+	echo "🗑️ Restoring the files of BACKUP_LIST..."
+	git restore "${BACKUP_LIST[@]}" || { echo "⚠️ Failed to git restore."; }
 
-	echo "✅ Git 仓库状态设置完成."
+	echo "✅ Finish set up git repository."
 }
 
 restore_original_files() {
