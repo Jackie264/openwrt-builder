@@ -23,6 +23,7 @@ GIT_TAG=""
 GIT_NOV_TAG=""
 IPADDR=""
 TARGET_TAG=""
+GIT_PULL_COMMIT=""
 
 BACKUP_LIST=(
 	./include/kernel-defaults.mk
@@ -62,6 +63,32 @@ select_git_target() {
 	echo "✅ Selected: $TARGET_TAG"
 }
 
+restore_git_state() {
+	if [ -n "$GIT_PULL_COMMIT" ]; then
+		echo "↩️ Restoring Git repository to $GIT_PULL_COMMIT ..."
+		if [ -d "$BUILD_DIR/.git" ]; then
+			cd "$BUILD_DIR" || { echo "❌ Can not enter $BUILD_DIR during restore git repository. "; return 1; }
+
+			git reset --hard "$GIT_PULL_COMMIT" || { echo "❌ git reset --hard $GIT_PULL_COMMIT failed! "; return 1; }
+
+			git clean -fdx || { echo "⚠️ git clean -fdx failed! "; return 1; }
+
+			echo "✅ Git repository restored."
+		else
+			echo "⚠️ Git repository $BUILD_DIR/.git not exists, skipping restore Git repository. "
+			return 1
+		}
+	}
+}
+
+exit_handler() {
+    local exit_status=$?
+    echo "Running clean-proceeding..."
+    restore_git_state
+    echo "Finish clean-proceeding."
+    exit "$exit_status"
+}
+
 setup_git_repository() {
 	echo "🛠️ Setting up Git repository..."
 
@@ -70,6 +97,9 @@ setup_git_repository() {
 
 	echo "⬇️ Pulling new commits of '$BRANCH' ..."
 	git pull || { echo "❌ Failed to pull updates. Check your internet connection or repository."; exit 1; }
+
+	GIT_PULL_COMMIT=$(git rev-parse HEAD)
+	echo "ℹ️ Record commits after Git pull: $GIT_PULL_COMMIT"
 
 	select_git_target
 
@@ -354,6 +384,8 @@ final_summary() {
 main() {
 	cd "$BUILD_DIR"
 	# trap restore_original_files EXIT
+	trap 'exit_handler' EXIT
+
 	setup_git_repository
 	select_device
 	set_vermagic_key
