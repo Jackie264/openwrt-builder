@@ -36,29 +36,35 @@ select_git_target() {
 		exit 1
 	fi
 
-	echo "🌐 Fetching tags for branch '$BRANCH' from remote repository..."
+	echo "🌐 Fetching all remote tags from remote repository..."
 	local current_dir=$(pwd)
 	cd "$BUILD_DIR" || { echo "❌ Error: Cannot enter $BUILD_DIR!"; exit 1; }
 
-	local tags=$(git ls-remote --tags origin "$BRANCH" 2>/dev/null | sed 's#^.*refs/tags/##')
-	local tag_list=""
-	local tag_count=0
+	local all_tags=$(git ls-remote --tags origin 2>/dev/null | sed 's#^.*refs/tags/##' | sed '/\^[{][}]$/d')
+	cd "$current_dir"
 
-	if [ -z "$tags" ]; then
-		echo "⚠️ Cannot find tags for branch '$BRANCH'."
+	if [ -z "$all_tags" ]; then
+		echo "⚠️ Cannot find any remote tags."
 		echo "   Building with a target tag is not possible."
-		cd "$current_dir"
+		exit 1
+	fi
+	
+	local filtered_tags=$(echo "$all_tags" | grep '^v24\.10')
+	if [ -z "$filtered_tags" ]; then
+		echo "⚠️ 在远程仓库中未找到任何 v24.10 及以后的标签。"
+		echo "   无法选择目标标签进行构建。"
 		exit 1
 	fi
 
-	for tag in $tags; do
+	local tag_list=""
+	local tag_count=0
+
+	for tag in $filtered_tags; do
 		tag_list+="$tag \"\" "
 		tag_count=$((tag_count + 1))
 	done
 
-	cd "$current_dir"
-
-	TARGET_TAG=$(whiptail --title "Select Tag for '$BRANCH'" --menu "Please choose the tag:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
+	TARGET_TAG=$(whiptail --title "Select Target Tag" --menu "Please choose the tag:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
 	echo "✅ Selected tag: $TARGET_TAG"
 }
 
@@ -66,9 +72,13 @@ restore_git_state() {
 	if [ -n "$GIT_PULL_COMMIT" ]; then
 		echo "↩️ Restoring Git repository to $GIT_PULL_COMMIT..."
 		if [ -d "$BUILD_DIR/.git" ]; then
-			cd "$BUILD_DIR" || { echo "❌ Error: Cannot enter $BUILD_DIR during Git repository restore."; return 1; }
-			git reset --hard "$GIT_PULL_COMMIT" || { echo "❌ Error: git reset --hard $GIT_PULL_COMMIT failed!"; return 1; }
-			git clean -fdx || { echo "⚠️ Warning: git clean -fdx failed!"; return 1; }
+			if [ "$(pwd)" != "$BUILD_DIR" ]; then
+				echo "ℹ️ Changing directory to $BUILD_DIR for Git restore..."
+				cd "$BUILD_DIR" || { echo "❌ Error: Cannot enter $BUILD_DIR during Git repository restore. "; return 1; }
+			fi
+			git reset --hard "$GIT_PULL_COMMIT" || { echo "❌ Error: git reset --hard $GIT_PULL_COMMIT failed! "; return 1; }
+			echo "🧹 Running make clean to remove build artifacts..."
+			make clean || { echo "⚠️ Warning: make clean failed!"; }
 			echo "✅ Git repository restored."
 		else
 			echo "⚠️ Warning: Git repository $BUILD_DIR/.git does not exist, skipping Git repository restore."
@@ -188,7 +198,16 @@ select_device() {
 				"home" "Home Enviroment" \
 				"office" "Office Enviroment" \
 				3>&1 1>&2 2>&3) || exit 1
-			sub_scene=$(echo "$sub_scene" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+			echo "DEBUG: raw sub_scene=['$sub_scene']"
+			echo "DEBUG: raw sub_scene hexdump:"
+			printf "%s" "$sub_scene" | hexdump -C
+			echo "DEBUG: raw sub_scene octaldump:"
+			printf "%s" "$sub_scene" | od -c
+
+			sub_scene=$(printf "%s" "$sub_scene" | sed 's/\xc2\xa0$//')
+
+			echo "DEBUG: trimmed sub_scene=['$sub_scene']"
+
 			DEVICE="$sub_scene.whw03v2"
 			if [ "$sub_scene" = "home" ]; then
 				MYFEED_URL="feeds.onenas.fun"
