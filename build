@@ -1,5 +1,4 @@
 #!/bin/bash
-# Note: install -m 644/755 is used only in patch_device_files to preserve expected permissions.
 set -e
 
 START_TIME=$(date +%s)
@@ -33,24 +32,24 @@ BACKUP_LIST=(
 
 select_git_target() {
 	if [ -z "$BRANCH" ]; then
-		echo "❌ Can not fetch tags, because of BRANCH not set up"
+		echo "❌ Error: BRANCH variable is not set."
 		exit 1
-	fi
+	}
 
-	echo "🌐 Fetching tags of '$BRANCH' from remote Repository..."
+	echo "🌐 Fetching tags for branch '$BRANCH' from remote repository..."
 	local current_dir=$(pwd)
-	cd "$BUILD_DIR" || { echo "❌ Can not entering $BUILD_DIR ！"; exit 1; }
+	cd "$BUILD_DIR" || { echo "❌ Error: Cannot enter $BUILD_DIR!"; exit 1; }
 
 	local tags=$(git ls-remote --tags origin "$BRANCH" 2>/dev/null | sed 's#^.*refs/tags/##')
 	local tag_list=""
 	local tag_count=0
 
 	if [ -z "$tags" ]; then
-		echo "⚠️ Can not find tags of '$BRANCH'."
-		echo "   Can not build with target tag."
+		echo "⚠️ Cannot find tags for branch '$BRANCH'."
+		echo "   Building with a target tag is not possible."
 		cd "$current_dir"
 		exit 1
-	fi
+	}
 
 	for tag in $tags; do
 		tag_list+="$tag \"\" "
@@ -59,60 +58,49 @@ select_git_target() {
 
 	cd "$current_dir"
 
-	TARGET_TAG=$(whiptail --title "Select the TAG of '$BRANCH'" --menu "Please choose the TAG:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
-	echo "✅ Selected: $TARGET_TAG"
+	TARGET_TAG=$(whiptail --title "Select Tag for '$BRANCH'" --menu "Please choose the tag:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
+	echo "✅ Selected tag: $TARGET_TAG"
 }
 
 restore_git_state() {
 	if [ -n "$GIT_PULL_COMMIT" ]; then
-		echo "↩️ Restoring Git repository to $GIT_PULL_COMMIT ..."
+		echo "↩️ Restoring Git repository to $GIT_PULL_COMMIT..."
 		if [ -d "$BUILD_DIR/.git" ]; then
-			cd "$BUILD_DIR" || { echo "❌ Can not enter $BUILD_DIR during restore git repository. "; return 1; }
-
-			git reset --hard "$GIT_PULL_COMMIT" || { echo "❌ git reset --hard $GIT_PULL_COMMIT failed! "; return 1; }
-
-			git clean -fdx || { echo "⚠️ git clean -fdx failed! "; return 1; }
-
+			cd "$BUILD_DIR" || { echo "❌ Error: Cannot enter $BUILD_DIR during Git repository restore."; return 1; }
+			git reset --hard "$GIT_PULL_COMMIT" || { echo "❌ Error: git reset --hard $GIT_PULL_COMMIT failed!"; return 1; }
+			git clean -fdx || { echo "⚠️ Warning: git clean -fdx failed!"; return 1; }
 			echo "✅ Git repository restored."
 		else
-			echo "⚠️ Git repository $BUILD_DIR/.git not exists, skipping restore Git repository. "
+			echo "⚠️ Warning: Git repository $BUILD_DIR/.git does not exist, skipping Git repository restore."
 			return 1
 		}
 	}
 }
 
 exit_handler() {
-    local exit_status=$?
-    echo "Running clean-proceeding..."
-    restore_git_state
-    echo "Finish clean-proceeding."
-    exit "$exit_status"
+	local exit_status=$?
+	echo "Running cleanup process..."
+	restore_git_state
+	echo "Cleanup process finished."
+	exit "$exit_status"
 }
 
 setup_git_repository() {
 	echo "🛠️ Setting up Git repository..."
-
 	echo "🔄 Git checkout: $BRANCH"
-	git checkout "$BRANCH" || { echo "❌ Failed to checkout $BRANCH "; exit 1; }
-
-	echo "⬇️ Pulling new commits of '$BRANCH' ..."
-	git pull || { echo "⚠️ Failed to pull updates. Check your internet connection or repository."; exit 1; }
-
+	git checkout "$BRANCH" || { echo "❌ Error: Failed to checkout $BRANCH."; exit 1; }
+	echo "⬇️ Pulling latest commits for branch '$BRANCH'..."
+	git pull || { echo "⚠️ Warning: Failed to pull updates. Check network or repository. Using current branch state."; }
 	GIT_PULL_COMMIT=$(git rev-parse HEAD)
-	echo "ℹ️ Record commits after Git pull: $GIT_PULL_COMMIT"
-
+	echo "ℹ️ Recorded commit after Git pull: $GIT_PULL_COMMIT"
 	select_git_target
-
-	echo "😴 Pause 2 secends..."
+	echo "😴 Pause 2 seconds..."
 	sleep 2
-
 	echo "🏷️ Git checkout: $TARGET_TAG"
-	git checkout "$TARGET_TAG" || { echo "❌ Failed to checkout $TARGET_TAG "; exit 1; }
-
-	echo "🗑️ Restoring the files of BACKUP_LIST..."
-	git restore "${BACKUP_LIST[@]}" || { echo "⚠️ Failed to git restore."; }
-
-	echo "✅ Finish set up git repository."
+	git checkout "$TARGET_TAG" || { echo "❌ Error: Failed to checkout $TARGET_TAG."; exit 1; }
+	echo "🗑️ Restoring files listed in BACKUP_LIST..."
+	git restore "${BACKUP_LIST[@]}" || { echo "⚠️ Warning: Failed to git restore files in BACKUP_LIST."; }
+	echo "✅ Finished setting up Git repository."
 }
 
 restore_original_files() {
@@ -138,7 +126,6 @@ set_vermagic_key() {
 
 patch_device_files() {
 	echo "🧩 Applying all patch files for $DEVICE..."
- 
 	install -m 644 "$CONFIG_DIR/config.$DEVICE" ./.config
 	install -m 644 "$CONFIG_DIR/vermagic.$VERMAGIC_KEY" ./vermagic
 	install -m 755 "$CONFIG_DIR/config_generate.$DEVICE" ./package/base-files/files/bin/config_generate
@@ -147,44 +134,39 @@ patch_device_files() {
 
 copy_firstboot_script() {
 	echo "📝 Installing firstboot script..."
-
 	local script_source="$CONFIG_DIR/cleanup-distfeeds.sh"
 	local script_dest_dir="package/base-files/files/etc/uci-defaults"
 	local script_dest_file="$script_dest_dir/99-cleanup-feeds"
-
 	if [ -f "$script_source" ]; then
 		mkdir -p "$script_dest_dir"
 		install -m 755 "$script_source" "$script_dest_file"
-		echo "✅ Installed firstboot script to: $script_dest_file ,setting up permission 755"
+		echo "✅ Installed firstboot script to: $script_dest_file, setting permission 755"
 	else
-		echo "⚠️ firstboot script file not exists: $script_source"
-		echo "   Please create cleanup-distfeeds.sh under $CONFIG_DIR next time."
-		echo "   building will continue, but No feeds-cleaning will proceed."
-	fi
+		echo "⚠️ Warning: Firstboot script file does not exist: $script_source"
+		echo "   Please create cleanup-distfeeds.sh under $CONFIG_DIR next time."
+		echo "   Building will continue, but no feeds cleanup will be performed on first boot."
+	}
 	sleep 2
 }
 
 update_local_feeds() {
 	echo "🔄 Updating local packages in $LOCAL_FEED_DIR..."
-
 	for dir in "$LOCAL_FEED_DIR"/*; do
 		if [ -d "$dir/.git" ]; then
-			echo "➡️  Pulling updates in $(basename "$dir") ..."
-			git -C "$dir" pull --ff-only || echo "⚠️  Failed to update $(basename "$dir")"
+			echo "➡️  Pulling updates in $(basename "$dir") ..."
+			git -C "$dir" pull --ff-only || echo "⚠️  Failed to update $(basename "$dir")"
 		fi
 	done
 }
 
 setup_local_feed() {
 	echo "📦 Setting up local feed..."
- 
 	if ! grep -q "src-link $FEED_NAME" feeds.conf.default; then
 		echo "src-link $FEED_NAME $LOCAL_FEED_DIR" >> feeds.conf.default
 		echo "✅ Added feed: $FEED_NAME"
 	else
 		echo "ℹ️ Local feed $FEED_NAME already exists in feeds.conf.default"
 	fi
- 
 	./scripts/feeds update -a
 	./scripts/feeds install -a
 }
@@ -195,20 +177,17 @@ select_device() {
 		"mx5300" "Linksys MX5300 (IPQ807x)" \
 		"whw03v2" "Linksys WHW03 v2 (IPQ40xx)" \
 		3>&1 1>&2 2>&3) || exit 1
-  
 	case "$base_device" in
 		mx5300)
 			DEVICE="mx5300"
 			MYFEED_URL="feeds.onenas.fun"
 			;;
-
 		whw03v2)
 			local sub_scene
 			sub_scene=$(whiptail --title "WHW03V2 Configuration" --menu "Select deployment profile:" 12 50 2 \
-				"home"   "Home Enviroment" \
+				"home"   "Home Enviroment" \
 				"office" "Office Enviroment" \
 				3>&1 1>&2 2>&3) || exit 1
-
 			DEVICE="$sub_scene.whw03v2"
 			if [ "$sub_scene" = "home" ]; then
 				MYFEED_URL="feeds.onenas.fun"
@@ -216,9 +195,8 @@ select_device() {
 				MYFEED_URL="feeds.sh-mtgc.com"
 			fi
 			;;
-
 		*)
-			echo "Invalid selection"
+			echo "❌ Invalid selection"
 			exit 1
 			;;
 	esac
@@ -232,7 +210,7 @@ clean_source_tree() {
 	else
 		echo "❌ Makefile not found in $BUILD_DIR, cannot clean!"
 		exit 1
-	fi
+	}
 }
 
 make_output_folder() {
@@ -240,10 +218,8 @@ make_output_folder() {
 	DATE_TAG=$(date +"%Y%m%d_%H%M")
 	OUTPUT_DIR="$OUTPUT_BASE/$DEVICE/$DATE_TAG"
 	mkdir -p "$OUTPUT_DIR"
-
 	LINK_PATH="$OUTPUT_BASE/$DEVICE/latest"
 	ln -sfn "$DATE_TAG" "$LINK_PATH"
-
 	if [ -L "$LINK_PATH" ]; then
 		echo "🔗 'latest' symlink created → $LINK_PATH → $DATE_TAG"
 	else
@@ -268,35 +244,28 @@ make_deconfig() {
 detect_target_info() {
 	echo "🔍 Detecting target info..."
 	local config_file=".config"
-
 	TARGET=$(grep -oP '^CONFIG_TARGET_BOARD="\K[^"]+' "$config_file")
 	SUBTARGET=$(grep -oP '^CONFIG_TARGET_SUBTARGET="\K[^"]+' "$config_file")
 	ARCH_PACKAGES=$(grep -oP '^CONFIG_TARGET_ARCH_PACKAGES="\K[^"]+' "$config_file")
 	GIT_TAG=$(git describe --tags --always 2>/dev/null || echo "unknown")
 	GIT_NOV_TAG=${GIT_TAG#v}
 	IPADDR=$(grep -oP 'lan\)\s+ipad=\$\{ipaddr:-"\K[^"]+' package/base-files/files/bin/config_generate | head -n1)
-
-
 	if [[ -z "$TARGET" || -z "$SUBTARGET" || -z "$ARCH_PACKAGES" ]]; then
 		echo "❌ Failed to detect TARGET, SUBTARGET, or ARCH_PACKAGES"
 		exit 1
-	fi
- 
+	}
 	echo "📦 GIT TAG=$GIT_TAG TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES | IP=$IPADDR"
 }
 
 generate_customfeeds_conf() {
 	echo "📝 Generating customfeeds.conf for $DEVICE..."
 	local ABI_HASH=$(cat ./vermagic)
-
 	if [ -z "$ABI_HASH" ]; then
-		echo "❌ Error: Can not get ABI-hash from ./vermagic !"
-		echo "   This should after patch_device_files , make sure ./vermagic exists and not empty..."
-
+		echo "❌ Error: Cannot get ABI-hash from ./vermagic!"
+		echo "   This file is expected to exist after patch_device_files. Make sure ./vermagic exists and is not empty."
 		exit 1
-	fi
+	}
 	local KMODS_URL="https://$ORIGIN_URL/$GIT_NOV_TAG/targets/$TARGET/$SUBTARGET/kmods/$KERNEL_VERSION-$ABI_HASH"
-
 	cat > package/system/opkg/files/customfeeds.conf <<EOF
 src/gz my_kmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
 src/gz my_packages https://$MYFEED_URL/$DEVICE/latest/packages/mypackages
@@ -304,7 +273,7 @@ src/gz openwrt_kmods $KMODS_URL
 
 EOF
 	echo "✅ Created customfeeds.conf,"
-	echo "   kmods source is: $KMODS_URL"
+	echo "   kmods source is: $KMODS_URL"
 	sleep 5
 }
 
@@ -312,18 +281,17 @@ target_summary() {
 	echo ""
 	echo "✅ To build firmware for: $DEVICE"
 	echo "📁 Firmware will save to: $OUTPUT_DIR"
-	echo "📦 Target:                $TARGET"
-	echo "📦 Subtarget:             $SUBTARGET"
-	echo "📦 Packages arch:         $ARCH_PACKAGES"
-	echo "🌐 Default IP:            $IPADDR"
-	echo "🔖 Git Tag:               $GIT_TAG"
+	echo "📦 Target:                $TARGET"
+	echo "📦 Subtarget:             $SUBTARGET"
+	echo "📦 Packages arch:         $ARCH_PACKAGES"
+	echo "🌐 Default IP:            $IPADDR"
+	echo "🔖 Git Tag:               $GIT_TAG"
 	echo ""
 	sleep 2
 }
 
 build_firmware() {
 	echo "⚙️ Starting build for $DEVICE..."
-
 	make download -j$(nproc)
 	if ! make V=s -j$(nproc); then
 		echo "⚠️ Multithread build failed. Retrying with single thread..."
@@ -340,55 +308,45 @@ copy_all_output() {
 final_summary() {
 	echo ""
 	echo "✅ Build completed for $DEVICE"
-	echo "📁 Firmware saved to:  $OUTPUT_DIR"
-	echo "📦 Target:             $TARGET"
-	echo "📦 Subtarget:          $SUBTARGET"
-	echo "📦 Packages arch:      $ARCH_PACKAGES"
-	echo "🌐 Default IP:         $IPADDR"
-	echo "🌐 Feed Source:        $MYFEED_URL"
-	echo "🔖 Git Tag:            $GIT_TAG"
+	echo "📁 Firmware saved to:  $OUTPUT_DIR"
+	echo "📦 Target:             $TARGET"
+	echo "📦 Subtarget:          $SUBTARGET"
+	echo "📦 Packages arch:      $ARCH_PACKAGES"
+	echo "🌐 Default IP:         $IPADDR"
+	echo "🌐 Feed Source:        $MYFEED_URL"
+	echo "🔖 Git Tag:            $GIT_TAG"
 	echo ""
-
 	local END_TIME=$(date +%s)
 	local DURATION=$((END_TIME - START_TIME))
 	local HOURS=$((DURATION / 3600))
 	local MINUTES=$(( (DURATION % 3600) / 60 ))
 	local SECONDS=$((DURATION % 60))
 	local DURATION_STRING=""
-
 	if [ "$HOURS" -gt 0 ]; then
 		DURATION_STRING+="${HOURS}h "
 	fi
-
 	if [ "$MINUTES" -gt 0 ] || [ "$HOURS" -gt 0 ]; then
 		DURATION_STRING+="${MINUTES}m "
 	fi
-
 	if [ "$HOURS" -gt 0 ] || [ "$MINUTES" -gt 0 ] || [ "$SECONDS" -gt 0 ]; then
 		DURATION_STRING+="${SECONDS}s"
 	fi
-
 	DURATION_STRING=$(echo "$DURATION_STRING" | sed 's/ $//')
 	if [ -z "$DURATION_STRING" ]; then
 		DURATION_STRING="0s"
 	fi
-
 	local FINISH_TIME_CST=$(TZ='Asia/Shanghai' date --date="@$END_TIME" +'%Y-%m-%d %H:%M:%S %Z')
-
-	echo "⏰ Build finished at:  $FINISH_TIME_CST"
-	echo "⏱️ Total duration:     $DURATION_STRING"
+	echo "⏰ Build finished at:  $FINISH_TIME_CST"
+	echo "⏱️ Total duration:     $DURATION_STRING"
 	echo ""
 }
 
 main() {
-	cd "$BUILD_DIR"
-	# trap restore_original_files EXIT
+	cd "$BUILD_DIR" || exit 1
 	trap 'exit_handler' EXIT
-
 	setup_git_repository
 	select_device
 	set_vermagic_key
-	# backup_original_files
 	clean_source_tree
 	update_local_feeds
 	patch_device_files
