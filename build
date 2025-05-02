@@ -34,7 +34,7 @@ select_git_target() {
 	if [ -z "$BRANCH" ]; then
 		echo "❌ Error: BRANCH variable is not set."
 		exit 1
-	}
+	fi
 
 	echo "🌐 Fetching tags for branch '$BRANCH' from remote repository..."
 	local current_dir=$(pwd)
@@ -49,7 +49,7 @@ select_git_target() {
 		echo "   Building with a target tag is not possible."
 		cd "$current_dir"
 		exit 1
-	}
+	fi
 
 	for tag in $tags; do
 		tag_list+="$tag \"\" "
@@ -73,8 +73,8 @@ restore_git_state() {
 		else
 			echo "⚠️ Warning: Git repository $BUILD_DIR/.git does not exist, skipping Git repository restore."
 			return 1
-		}
-	}
+		fi
+	fi
 }
 
 exit_handler() {
@@ -145,7 +145,7 @@ copy_firstboot_script() {
 		echo "⚠️ Warning: Firstboot script file does not exist: $script_source"
 		echo "   Please create cleanup-distfeeds.sh under $CONFIG_DIR next time."
 		echo "   Building will continue, but no feeds cleanup will be performed on first boot."
-	}
+	fi
 	sleep 2
 }
 
@@ -210,7 +210,7 @@ clean_source_tree() {
 	else
 		echo "❌ Makefile not found in $BUILD_DIR, cannot clean!"
 		exit 1
-	}
+	fi
 }
 
 make_output_folder() {
@@ -253,7 +253,7 @@ detect_target_info() {
 	if [[ -z "$TARGET" || -z "$SUBTARGET" || -z "$ARCH_PACKAGES" ]]; then
 		echo "❌ Failed to detect TARGET, SUBTARGET, or ARCH_PACKAGES"
 		exit 1
-	}
+	fi
 	echo "📦 GIT TAG=$GIT_TAG TARGET=$TARGET | SUBTARGET=$SUBTARGET | ARCH=$ARCH_PACKAGES | IP=$IPADDR"
 }
 
@@ -264,7 +264,7 @@ generate_customfeeds_conf() {
 		echo "❌ Error: Cannot get ABI-hash from ./vermagic!"
 		echo "   This file is expected to exist after patch_device_files. Make sure ./vermagic exists and is not empty."
 		exit 1
-	}
+	fi
 	local KMODS_URL="https://$ORIGIN_URL/$GIT_NOV_TAG/targets/$TARGET/$SUBTARGET/kmods/$KERNEL_VERSION-$ABI_HASH"
 	cat > package/system/opkg/files/customfeeds.conf <<EOF
 src/gz my_kmod https://$MYFEED_URL/$DEVICE/latest/targets/packages
