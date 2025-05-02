@@ -69,7 +69,7 @@ setup_git_repository() {
 	git checkout "$BRANCH" || { echo "❌ Failed to checkout $BRANCH "; exit 1; }
 
 	echo "⬇️ Pulling new commits of '$BRANCH' ..."
-	git pull || { echo "⚠️ Filed to Git pull!"; }
+	git pull || { echo "❌ Failed to pull updates. Check your internet connection or repository."; exit 1; }
 
 	select_git_target
 
