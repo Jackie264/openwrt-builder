@@ -51,8 +51,8 @@ select_git_target() {
 	
 	local filtered_tags=$(echo "$all_tags" | grep '^v24\.10')
 	if [ -z "$filtered_tags" ]; then
-		echo "⚠️ 在远程仓库中未找到任何 v24.10 及以后的标签。"
-		echo "   无法选择目标标签进行构建。"
+		echo "⚠️ No tags for v24.10 in remote repository!"
+		echo "   Cannot build with tag."
 		exit 1
 	fi
 
