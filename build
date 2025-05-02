@@ -96,7 +96,7 @@ setup_git_repository() {
 	git checkout "$BRANCH" || { echo "❌ Failed to checkout $BRANCH "; exit 1; }
 
 	echo "⬇️ Pulling new commits of '$BRANCH' ..."
-	git pull || { echo "❌ Failed to pull updates. Check your internet connection or repository."; exit 1; }
+	git pull || { echo "⚠️ Failed to pull updates. Check your internet connection or repository."; exit 1; }
 
 	GIT_PULL_COMMIT=$(git rev-parse HEAD)
 	echo "ℹ️ Record commits after Git pull: $GIT_PULL_COMMIT"
@@ -154,7 +154,6 @@ copy_firstboot_script() {
 
 	if [ -f "$script_source" ]; then
 		mkdir -p "$script_dest_dir"
-		# 使用 install -m 755
 		install -m 755 "$script_source" "$script_dest_file"
 		echo "✅ Installed firstboot script to: $script_dest_file ,setting up permission 755"
 	else
