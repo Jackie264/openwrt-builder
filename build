@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 START_TIME=$(date +%s)
 BUILD_DIR="$HOME/Downloads/openwrt-24.10"
