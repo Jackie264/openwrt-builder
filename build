@@ -43,29 +43,47 @@ select_git_target() {
 	local all_tags=$(git ls-remote --tags origin 2>/dev/null | sed 's#^.*refs/tags/##' | sed '/\^[{][}]$/d')
 	cd "$current_dir"
 
+	local filtered_tags=""
+	local tag_list=""
+	local tag_count=0
+
 	if [ -z "$all_tags" ]; then
 		echo "⚠️ Cannot find any remote tags."
 		echo "   Building with a target tag is not possible."
 		exit 1
 	fi
+
+	echo "Filtering tags to show v24.10+..."
+	filtered_tags=$(echo "$all_tags" | grep '^v24\.10')
 	
-	local filtered_tags=$(echo "$all_tags" | grep '^v24\.10')
 	if [ -z "$filtered_tags" ]; then
-		echo "⚠️ No tags for v24.10 in remote repository!"
-		echo "   Cannot build with tag."
+		echo "⚠️ Cannot find any v24.10+ tags in the remote repository."
+		echo "   Cannot build with none tag."
 		exit 1
 	fi
 
-	local tag_list=""
-	local tag_count=0
+	echo "Preparing filtered tag list for selection..."
+
+	tag_count=$(echo "$filtered_tags" | wc -l)
 
 	for tag in $filtered_tags; do
-		tag_list+="$tag \"\" "
-		tag_count=$((tag_count + 1))
+		tag_list+="$tag \"$tag\" "
 	done
 
-	TARGET_TAG=$(whiptail --title "Select Target Tag" --menu "Please choose the tag:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
+	local default_tag=$(echo "$filtered_tags" | tail -n 1)
+
+	if [ -z "$default_tag" ]; then
+		unset default_tag
+	fi
+
+	if [ -n "$default_tag" ]; then
+		TARGET_TAG=$(whiptail --title "Select Target Tag (v24.10+)" --menu "Please choose the tag:" 25 60 $tag_count $tag_list --default-item "$default_tag" 3>&1 1>&2 2>&3) || exit 1
+	else
+		TARGET_TAG=$(whiptail --title "Select Target Tag (v24.10+)" --menu "Please choose the tag:" 25 60 $tag_count $tag_list 3>&1 1>&2 2>&3) || exit 1
+	fi
+
 	echo "✅ Selected tag: $TARGET_TAG"
+	BUILD_FROM_BRANCH_HEAD=false
 }
 
 restore_git_state() {
@@ -104,10 +122,18 @@ setup_git_repository() {
 	GIT_PULL_COMMIT=$(git rev-parse HEAD)
 	echo "ℹ️ Recorded commit after Git pull: $GIT_PULL_COMMIT"
 	select_git_target
-	echo "😴 Pause 2 seconds..."
-	sleep 2
-	echo "🏷️ Git checkout: $TARGET_TAG"
-	git checkout "$TARGET_TAG" || { echo "❌ Error: Failed to checkout $TARGET_TAG."; exit 1; }
+
+	if [ "$BUILD_FROM_BRANCH_HEAD" = "true" ]; then
+		echo "ℹ️ Building from branch head '$BRANCH'. Skipping tag checkout."
+	else
+		echo "😴 Please wait one second..."
+		sleep 1
+		echo "🏷️ Git checkout: $TARGET_TAG"
+		git checkout "$TARGET_TAG" || { echo "❌ Error: Failed to checkout $TARGET_TAG."; exit 1; }
+		echo "🔄 Updating submodules for tag '$TARGET_TAG'..."
+		git submodule update --init --recursive || { echo "❌ Error: Failed to update submodules for tag '$TARGET_TAG'."; exit 1; }
+	fi
+
 	echo "🗑️ Restoring files listed in BACKUP_LIST..."
 	git restore "${BACKUP_LIST[@]}" || { echo "⚠️ Warning: Failed to git restore files in BACKUP_LIST."; }
 	echo "✅ Finished setting up Git repository."
