@@ -170,16 +170,16 @@ patch_device_files() {
 
 copy_firstboot_script() {
 	echo "📝 Installing firstboot script..."
-	local script_source="$CONFIG_DIR/cleanup-distfeeds.sh"
+	local script_source="$CONFIG_DIR/firstboot-config.sh"
 	local script_dest_dir="package/base-files/files/etc/uci-defaults"
-	local script_dest_file="$script_dest_dir/99-cleanup-feeds"
+	local script_dest_file="$script_dest_dir/99-firstboot-config"
 	if [ -f "$script_source" ]; then
 		mkdir -p "$script_dest_dir"
 		install -m 755 "$script_source" "$script_dest_file"
 		echo "✅ Installed firstboot script to: $script_dest_file, setting permission 755"
 	else
 		echo "⚠️ Warning: Firstboot script file does not exist: $script_source"
-		echo "   Please create cleanup-distfeeds.sh under $CONFIG_DIR next time."
+		echo "   Please create firstboot-config.sh under $CONFIG_DIR next time."
 		echo "   Building will continue, but no feeds cleanup will be performed on first boot."
 	fi
 	sleep 2
