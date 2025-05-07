@@ -224,15 +224,15 @@ select_device() {
 				"home" "Home Enviroment" \
 				"office" "Office Enviroment" \
 				3>&1 1>&2 2>&3) || exit 1
-			echo "DEBUG: raw sub_scene=['$sub_scene']"
-			echo "DEBUG: raw sub_scene hexdump:"
-			printf "%s" "$sub_scene" | hexdump -C
-			echo "DEBUG: raw sub_scene octaldump:"
-			printf "%s" "$sub_scene" | od -c
+			# echo "DEBUG: raw sub_scene=['$sub_scene']"
+			# echo "DEBUG: raw sub_scene hexdump:"
+			# printf "%s" "$sub_scene" | hexdump -C
+			# echo "DEBUG: raw sub_scene octaldump:"
+			# printf "%s" "$sub_scene" | od -c
 
 			sub_scene=$(printf "%s" "$sub_scene" | sed 's/\xc2\xa0$//')
 
-			echo "DEBUG: trimmed sub_scene=['$sub_scene']"
+			# echo "DEBUG: trimmed sub_scene=['$sub_scene']"
 
 			DEVICE="$sub_scene.whw03v2"
 			if [ "$sub_scene" = "home" ]; then
