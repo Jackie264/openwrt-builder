@@ -18,4 +18,14 @@ else
     logger "Openwrt firstboot cleanup: $DISTFEEDS not found!"
 fi
 
+uci set system.@system[0].description='A Linksys Network Unit'
+uci set system.@system[0].log_file='/tmp/system.log'
+uci commit system
+
+echo "net.core.rmem_max=7500000" > /etc/sysctl.d/99-network.conf
+echo "net.core.wmem_max=7500000" >> /etc/sysctl.d/99-network.conf
+
+sysctl -w net.core.rmem_max=7500000
+sysctl -w net.core.wmem_max=7500000
+
 exit 0
