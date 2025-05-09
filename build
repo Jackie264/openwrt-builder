@@ -253,7 +253,7 @@ EOF
 	chmod +x "$dest_script_path"
 	echo "✅ Generated uci-defaults script: $dest_script_path"
 	echo "📢 Remember to upload key-build.pub to your Feed Web server!"
-	echo "    $dest_script_path"
+	echo "    $key_download_url"
 
 	return 0
 }
