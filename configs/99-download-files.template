@@ -30,7 +30,6 @@ fi
 # permissions is optional (e.g., 755 for executable). If empty, no chmod is performed.
 # This list will be embedded by the build script
 CUSTOM_FILE_LIST=(
-# __CUSTOM_FILE_LIST__ is a placeholder for the list defined in build.sh
 __CUSTOM_FILE_LIST__
 )
 
