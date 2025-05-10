@@ -229,6 +229,7 @@ generate_custom_files_download_script() {
 	chmod +x "$dest_script_path"
 	echo "✅ Processed template and generated custom files download script: $dest_script_path"
 	sleep 5
+
 	return 0
 }
 
@@ -294,6 +295,7 @@ process_and_copy_key_download_script_template() {
 	local key_upload_url="https://$MYFEED_URL/$DEVICE/latest/myfeeds-cert/$custom_key_file"
 	echo "   请将源码目录下的 '$pub_key_source' 文件手动上传到以下 URL 对应的 Web 路径下："
 	echo "   $key_upload_url"
+	sleep 5
 
 	return 0
 }
