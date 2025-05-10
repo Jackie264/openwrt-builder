@@ -37,80 +37,80 @@ __CUSTOM_FILE_LIST__
 # Loop through the file list and download each file
 for FILE_ENTRY in "${CUSTOM_FILE_LIST[@]}"; do
     # Parse the file entry string
-    SOURCE_FILENAME="\${FILE_ENTRY%%::*}" # Extract part before first ::
+    SOURCE_FILENAME="${FILE_ENTRY%%::*}" # Extract part before first ::
     # Check if :: separator exists
-    if [ "\$SOURCE_FILENAME" = "\$FILE_ENTRY" ]; then
-        logger -t $LOG_TAG "Warning: Invalid file list entry format (missing '::'): '\$FILE_ENTRY'. Skipping."
+    if [ "$SOURCE_FILENAME" = "$FILE_ENTRY" ]; then
+        logger -t $LOG_TAG "Warning: Invalid file list entry format (missing '::'): '$FILE_ENTRY'. Skipping."
         continue
     fi
 
-    REST="\${FILE_ENTRY#*::}" # Extract part after first ::
+    REST="${FILE_ENTRY#*::}" # Extract part after first ::
 
     # Extract destination path (part before second ::)
-    DEST_PATH="\${REST%%::*}"
+    DEST_PATH="${REST%%::*}"
      # Check if :: separator exists in REST (meaning permissions might be present)
-    if [ "\$DEST_PATH" = "\$REST" ]; then
+    if [ "$DEST_PATH" = "$REST" ]; then
        # No second :: found, permissions are not specified
        PERMISSIONS=""
     else
        # Second :: found, extract permissions
-       PERMISSIONS="\${REST#*::}"
+       PERMISSIONS="${REST#*::}"
     fi
 
 
     # Check if source filename and destination path were successfully parsed
-    if [ -z "\$SOURCE_FILENAME" ] || [ -z "\$DEST_PATH" ]; then
-        logger -t $LOG_TAG "Warning: Invalid file list entry format (empty source or dest): '\$FILE_ENTRY'. Skipping."
+    if [ -z "$SOURCE_FILENAME" ] || [ -z "$DEST_PATH" ]; then
+        logger -t $LOG_TAG "Warning: Invalid file list entry format (empty source or dest): '$FILE_ENTRY'. Skipping."
         continue # Skip to next file
     fi
 
     # Construct the full download URL
-    FULL_DOWNLOAD_URL="\$BASE_DOWNLOAD_URL/\$SOURCE_FILENAME"
+    FULL_DOWNLOAD_URL="$BASE_DOWNLOAD_URL/$SOURCE_FILENAME"
     # Extract the destination directory
-    DEST_DIR="\$(dirname "\$DEST_PATH")"
+    DEST_DIR="$(dirname "$DEST_PATH")"
     # Extract the destination filename (not strictly needed for download, but useful for logs/temp file naming)
-    FILENAME="\$(basename "\$DEST_PATH")"
+    FILENAME="$(basename "$DEST_PATH")"
 
-    logger -t \$LOG_TAG "Processing file: \$SOURCE_FILENAME -> \$DEST_PATH"
+    logger -t $LOG_TAG "Processing file: $SOURCE_FILENAME -> $DEST_PATH"
 
     # Check if file already exists at destination
     # Note: This is a simple check. More complex logic might be needed if you want to update existing files.
-    if [ -f "\$DEST_PATH" ]; then
-        logger -t $LOG_TAG "File already exists at \$DEST_PATH. Skipping download."
+    if [ -f "$DEST_PATH" ]; then
+        logger -t $LOG_TAG "File already exists at $DEST_PATH. Skipping download."
         continue # Skip to next file
     fi
 
     # Create destination directory if needed
-    mkdir -p "\$DEST_DIR"
+    mkdir -p "$DEST_DIR"
 
     # Temporary path during download
-    TMP_PATH="\${DEST_PATH}.tmp"
+    TMP_PATH="${DEST_PATH}.tmp"
 
     # Perform download using the determined command
     if [ "$DOWNLOAD_CMD" = "wget" ]; then
-        "$DOWNLOAD_CMD" -O "\$TMP_PATH" "\$FULL_DOWNLOAD_URL"
+        "$DOWNLOAD_CMD" -O "$TMP_PATH" "$FULL_DOWNLOAD_URL"
     elif [ "$DOWNLOAD_CMD" = "curl" ]; then
-        "$DOWNLOAD_CMD" -o "\$TMP_PATH" "\$FULL_DOWNLOAD_URL"
+        "$DOWNLOAD_CMD" -o "$TMP_PATH" "$FULL_DOWNLOAD_URL"
     fi
 
     # Check download success and move to final destination
-    if [ -f "\$TMP_PATH" ]; then
-        mv "\$TMP_PATH" "\$DEST_PATH"
+    if [ -f "$TMP_PATH" ]; then
+        mv "$TMP_PATH" "$DEST_PATH"
         # Check if move was successful
         if [ $? -eq 0 ]; then
-            logger -t $LOG_TAG "Successfully downloaded \$SOURCE_FILENAME to \$DEST_PATH."
+            logger -t $LOG_TAG "Successfully downloaded $SOURCE_FILENAME to $DEST_PATH."
 
             # Set permissions if specified in the file entry
-            if [ -n "\$PERMISSIONS" ]; then
-                chmod "\$PERMISSIONS" "\$DEST_PATH"
-                logger -t $LOG_TAG "Set permissions to \$PERMISSIONS for \$DEST_PATH."
+            if [ -n "$PERMISSIONS" ]; then
+                chmod "$PERMISSIONS" "$DEST_PATH"
+                logger -t $LOG_TAG "Set permissions to $PERMISSIONS for $DEST_PATH."
             fi
         else
-             logger -t $LOG_TAG "Error: Failed to move downloaded file from \$TMP_PATH to \$DEST_PATH."
+             logger -t $LOG_TAG "Error: Failed to move downloaded file from $TMP_PATH to $DEST_PATH."
         fi
 
     else
-        logger -t $LOG_TAG "Error: Failed to download \$SOURCE_FILENAME from \$FULL_DOWNLOAD_URL."
+        logger -t $LOG_TAG "Error: Failed to download $SOURCE_FILENAME from $FULL_DOWNLOAD_URL."
         logger -t $LOG_TAG "Please check network connection, URL, and Web server."
     fi
 done
