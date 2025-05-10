@@ -12,8 +12,12 @@
 CUSTOM_KEY_DOWNLOAD_URL="https://__MYFEED_URL__/__DEVICE__/latest/myfeeds-cert/__CUSTOM_KEY_FILE__"
 CUSTOM_KEY_FILE="__CUSTOM_KEY_FILE__"
 DEST_KEY_DIR="/etc/opkg/keys"
+FEED_KMODS="src/gz my_kmods https://__MYFEED_URL__/__DEVICE__/latest/targets/packages"
+FEED_PACKAGES="src/gz my_packages https://__MYFEED_URL__/__DEVICE__/latest/packages/mypackages"
+CUSTOM_FEEDS_CONF="/etc/opkg/customfeeds.conf"
+
 LOG_TAG="uci-defaults-key-dl"
-logger -t $LOG_TAG "Starting custom opkg public key download script."
+logger -t $LOG_TAG "Starting custom opkg key download and feed configuration script."
 
 if [ -f "$DEST_KEY_DIR/$CUSTOM_KEY_FILE" ]; then
     logger -t $LOG_TAG "Custom opkg public key already exists at $DEST_KEY_DIR/$CUSTOM_KEY_FILE. Skipping download."
@@ -52,6 +56,23 @@ if [ -n "$DOWNLOAD_CMD" ]; then
     fi
 fi
 
-logger -t $LOG_TAG "Custom opkg public key download script finished."
+logger -t $LOG_TAG "Checking custom feed configuration in $CUSTOM_FEEDS_CONF..."
+touch "$CUSTOM_FEEDS_CONF"
+
+if ! grep -q "$FEED_KMODS" "$CUSTOM_FEEDS_CONF"; then
+    echo "$FEED_KMODS" >> "$CUSTOM_FEEDS_CONF"
+    logger -t $LOG_TAG "Added feed: $FEED_KMODS"
+else
+    logger -t $LOG_TAG "Feed already exists: $FEED_KMODS"
+fi
+
+if ! grep -q "$FEED_PACKAGES" "$CUSTOM_FEEDS_CONF"; then
+    echo "$FEED_PACKAGES" >> "$CUSTOM_FEEDS_CONF"
+    logger -t $LOG_TAG "Added feed: $FEED_PACKAGES"
+else
+    logger -t $LOG_TAG "Feed already exists: $FEED_PACKAGES"
+fi
+
+logger -t $LOG_TAG "Custom opkg key download and feed configuration script finished."
 
 exit 0
