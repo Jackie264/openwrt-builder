@@ -199,7 +199,7 @@ process_and_copy_key_download_script_template() {
 	fi
 
 	local template_source="$CONFIG_DIR/98-download-key.template"
-	local output_packages_dir="$OUTPUT_DIR/packages"
+	local output_packages_dir="$OUTPUT_DIR/uci-defaults"
 	local dest_script_path="$output_packages_dir/98-download-custom-key"
 
 	if [ ! -f "$template_source" ]; then
