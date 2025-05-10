@@ -169,6 +169,69 @@ patch_device_files() {
 	install -m 644 "$CONFIG_DIR/kernel-defaults.mk" ./include/kernel-defaults.mk
 }
 
+generate_custom_files_download_script() {
+	echo "📝 Generating custom files download script..."
+
+	# >>> 定义要下载的自定义文件列表 <<<
+	local CUSTOM_FILES=(
+		"app_conf/sync_leases.sh::/etc/keepalived/scripts/sync_leases.sh::755"
+		"app_conf/keepalived.user::/etc/keepalived.user"
+		"app_conf/keepalived::/etc/config/keepalived"
+		"app_conf/natmap::/etc/config/natmap"
+		"app_conf/AdGuardHome.yaml::/etc/AdGuardHome.yaml"
+	)
+	# >>> 文件列表定义结束 <<<
+
+	if [ -z "$MYFEED_URL" ] || [ -z "$DEVICE" ] || [ -z "$OUTPUT_DIR" ]; then
+		echo "❌ Error: MYFEED_URL, DEVICE, or OUTPUT_DIR variables are not set. Cannot generate custom files download script."
+		return 1
+	fi
+
+	local BASE_DOWNLOAD_URL="https://$MYFEED_URL/$DEVICE"
+
+	local template_source="$CONFIG_DIR/99-download-files.template"
+	local output_packages_dir="$OUTPUT_DIR/uci-defaults"
+	local dest_script_path="$output_packages_dir/99-download-custom-files"
+
+	if [ ! -f "$template_source" ]; then
+		echo "❌ Error: Script template file not found: $template_source. Cannot generate custom files download script."
+		return 1
+	fi
+
+	echo "ℹ️ Base download URL for custom files: $BASE_DOWNLOAD_URL"
+	echo "ℹ️ Processing template: $template_source"
+	echo "ℹ️ Generating script to: $dest_script_path"
+
+	mkdir -p "$output_packages_dir"
+
+	local EMBEDDED_FILE_LIST=""
+	for item in "${CUSTOM_FILES[@]}"; do
+		EMBEDDED_FILE_LIST+="\"$item\" "
+	done
+	EMBEDDED_FILE_LIST=$(echo "$EMBEDDED_FILE_LIST" | sed 's/ $//')
+
+	if [ -z "$EMBEDDED_FILE_LIST" ]; then
+		echo "⚠️ Warning: CUSTOM_FILES list is empty. Skipping generation of custom files download script."
+		return 0
+	fi
+
+	sed \
+		-e "s|__BASE_DOWNLOAD_URL__|$BASE_DOWNLOAD_URL|g" \
+		-e "s|__CUSTOM_FILE_LIST__|$EMBEDDED_FILE_LIST|g" \
+		"$template_source" > "$dest_script_path"
+
+	if [ $? -ne 0 ]; then
+		echo "❌ Error: Failed to process script template with sed."
+		[ -f "$dest_script_path" ] && rm "$dest_script_path"
+		return 1
+	fi
+
+	chmod +x "$dest_script_path"
+	echo "✅ Processed template and generated custom files download script: $dest_script_path"
+	sleep 5
+	return 0
+}
+
 process_and_copy_key_download_script_template() {
 	echo "📝 Processing key download script template and copying to output packages directory..."
 
@@ -486,6 +549,7 @@ main() {
 	make_deconfig
 	process_and_copy_key_download_script_template
 	copy_public_key
+	generate_custom_files_download_script
 	detect_target_info
 	generate_customfeeds_conf
 	target_summary
