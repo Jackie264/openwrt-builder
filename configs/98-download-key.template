@@ -15,16 +15,16 @@ DEST_KEY_DIR="/etc/opkg/keys"
 LOG_TAG="uci-defaults-key-dl"
 logger -t $LOG_TAG "Starting custom opkg public key download script."
 
-if [ -f "\$DEST_KEY_DIR/\$CUSTOM_KEY_FILE" ]; then
+if [ -f "$DEST_KEY_DIR/$CUSTOM_KEY_FILE" ]; then
     logger -t $LOG_TAG "Custom opkg public key already exists at $DEST_KEY_DIR/$CUSTOM_KEY_FILE. Skipping download."
     exit 0
 fi
 
 DOWNLOAD_CMD=""
 if command -v wget >/dev/null 2>&1; then
-    DOWNLOAD_CMD="wget -O"
+    DOWNLOAD_CMD="wget"
 elif command -v curl >/dev/null 2>&1; then
-    DOWNLOAD_CMD="curl -o"
+    DOWNLOAD_CMD="curl"
 else
     logger -t $LOG_TAG "Error: wget or curl command not found. Cannot download public key file."
     logger -t $LOG_TAG "Please ensure your firmware includes the wget or curl package."
@@ -33,17 +33,21 @@ fi
 
 mkdir -p "$DEST_KEY_DIR"
 
-TMP_KEY_PATH="$DEST_KEY_DIR/\$CUSTOM_KEY_FILE.tmp"
-FINAL_KEY_PATH="$DEST_KEY_DIR/\$CUSTOM_KEY_FILE"
+TMP_KEY_PATH="$DEST_KEY_DIR/$CUSTOM_KEY_FILE.tmp"
+FINAL_KEY_PATH="$DEST_KEY_DIR/$CUSTOM_KEY_FILE"
 
-if [ -n "\$DOWNLOAD_CMD" ]; then
-  \$DOWNLOAD_CMD "\$TMP_KEY_PATH" "\$CUSTOM_KEY_DOWNLOAD_URL"
+if [ -n "$DOWNLOAD_CMD" ]; then
+  if [ "$DOWNLOAD_CMD" = "wget" ]; then
+      "$DOWNLOAD_CMD" -O "$TMP_KEY_PATH" "$CUSTOM_KEY_DOWNLOAD_URL"
+  elif [ "$DOWNLOAD_CMD" = "curl" ]; then
+      "$DOWNLOAD_CMD" -o "$TMP_KEY_PATH" "$CUSTOM_KEY_DOWNLOAD_URL"
+  fi
 
-  if [ -f "\$TMP_KEY_PATH" ]; then
-    mv "\$TMP_KEY_PATH" "\$FINAL_KEY_PATH"
+  if [ -f "$TMP_KEY_PATH" ]; then
+    mv "$TMP_KEY_PATH" "$FINAL_KEY_PATH"
     logger -t $LOG_TAG "Custom opkg public key downloaded and installed to $FINAL_KEY_PATH."
   else
-    logger -t $LOG_TAG "Error: Failed to download custom opkg public key from \$CUSTOM_KEY_DOWNLOAD_URL."
+    logger -t $LOG_TAG "Error: Failed to download custom opkg public key from $CUSTOM_KEY_DOWNLOAD_URL."
     logger -t $LOG_TAG "Please check network connection, URL, and Web server."
   fi
 fi
