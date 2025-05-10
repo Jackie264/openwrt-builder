@@ -199,9 +199,11 @@ generate_custom_files_download_script() {
 		return 1
 	fi
 
+	echo ""
 	echo "ℹ️ Base download URL for custom files: $BASE_DOWNLOAD_URL"
 	echo "ℹ️ Processing template: $template_source"
 	echo "ℹ️ Generating script to: $dest_script_path"
+	echo ""
 
 	mkdir -p "$output_packages_dir"
 
@@ -228,7 +230,9 @@ generate_custom_files_download_script() {
 	fi
 
 	chmod +x "$dest_script_path"
+	echo ""
 	echo "✅ Processed template and generated custom files download script: $dest_script_path"
+	echo ""
 	sleep 5
 
 	return 0
@@ -272,9 +276,11 @@ process_and_copy_key_download_script_template() {
 		return 1
 	fi
 
+	echo ""
 	echo "ℹ️ Key fingerprint filename: $custom_key_file"
 	echo "ℹ️ Processing template: $template_source"
 	echo "ℹ️ Generating script to: $dest_script_path"
+	echo ""
 
 	mkdir -p "$output_packages_dir"
 
@@ -291,11 +297,13 @@ process_and_copy_key_download_script_template() {
 	fi
 
 	chmod +x "$dest_script_path"
+	echo ""
 	echo "✅ Processed template and copied script to: $dest_script_path"
 	echo "📢 Remember to upload key-build.pub to your Feed Web server!"
 	local key_upload_url="https://$MYFEED_URL/$DEVICE/latest/myfeeds-cert/$custom_key_file"
 	echo "   请将源码目录下的 '$pub_key_source' 文件手动上传到以下 URL 对应的 Web 路径下："
 	echo "   $key_upload_url"
+	echo ""
 	sleep 5
 
 	return 0
