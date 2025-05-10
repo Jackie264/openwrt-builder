@@ -175,6 +175,7 @@ generate_custom_files_download_script() {
 	# >>> 定义要下载的自定义文件列表 <<<
 	local CUSTOM_FILES=(
 		"app_conf/sync_leases.sh::/etc/keepalived/scripts/sync_leases.sh::755"
+		"app_conf/opkgscript.sh::/etc/config/opkgscript.sh::755"
 		"app_conf/keepalived.user::/etc/keepalived.user"
 		"app_conf/keepalived::/etc/config/keepalived"
 		"app_conf/natmap::/etc/config/natmap"
