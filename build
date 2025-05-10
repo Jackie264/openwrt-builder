@@ -180,10 +180,17 @@ process_and_copy_key_download_script_template() {
 		return 1
 	fi
 
-	custom_key_file=$(sha256sum "$pub_key_source" | head -c 16)
-	if [ -z "$custom_key_file" ]; then
-		 echo "❌ Error: Failed to calculate hash for key-build.pub. Cannot generate key download script."
-		 return 1
+	local usign_path="$BUILD_DIR/staging_dir/host/bin/usign"
+	if [ ! -x "$usign_path" ]; then
+		echo "❌ Error: usign tool not found or not executable at $usign_path."
+		echo "   Please ensure OpenWrt toolchain and host tools are built (e.g., run make tools/install and make toolchain/install)."
+		return 1
+	fi
+
+	custom_key_file=$("$usign_path" -F -p "$pub_key_source")
+	if [ $? -ne 0 ] || [ -z "$custom_key_file" ]; then
+		echo "❌ Error: Failed to calculate key fingerprint using $usign_path -F -p $pub_key_source."
+		return 1
 	fi
 
 	if [ -z "$MYFEED_URL" ] || [ -z "$DEVICE" ] || [ -z "$OUTPUT_DIR" ]; then
@@ -200,7 +207,7 @@ process_and_copy_key_download_script_template() {
 		return 1
 	fi
 
-	echo "ℹ️ Key hash filename: $custom_key_file"
+	echo "ℹ️ Key fingerprint filename: $custom_key_file"
 	echo "ℹ️ Processing template: $template_source"
 	echo "ℹ️ Generating script to: $dest_script_path"
 
