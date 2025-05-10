@@ -37,19 +37,19 @@ TMP_KEY_PATH="$DEST_KEY_DIR/$CUSTOM_KEY_FILE.tmp"
 FINAL_KEY_PATH="$DEST_KEY_DIR/$CUSTOM_KEY_FILE"
 
 if [ -n "$DOWNLOAD_CMD" ]; then
-  if [ "$DOWNLOAD_CMD" = "wget" ]; then
-      "$DOWNLOAD_CMD" -O "$TMP_KEY_PATH" "$CUSTOM_KEY_DOWNLOAD_URL"
-  elif [ "$DOWNLOAD_CMD" = "curl" ]; then
-      "$DOWNLOAD_CMD" -o "$TMP_KEY_PATH" "$CUSTOM_KEY_DOWNLOAD_URL"
-  fi
+    if [ "$DOWNLOAD_CMD" = "wget" ]; then
+        "$DOWNLOAD_CMD" -O "$TMP_KEY_PATH" "$CUSTOM_KEY_DOWNLOAD_URL"
+    elif [ "$DOWNLOAD_CMD" = "curl" ]; then
+        "$DOWNLOAD_CMD" -o "$TMP_KEY_PATH" "$CUSTOM_KEY_DOWNLOAD_URL"
+    fi
 
-  if [ -f "$TMP_KEY_PATH" ]; then
-    mv "$TMP_KEY_PATH" "$FINAL_KEY_PATH"
-    logger -t $LOG_TAG "Custom opkg public key downloaded and installed to $FINAL_KEY_PATH."
-  else
-    logger -t $LOG_TAG "Error: Failed to download custom opkg public key from $CUSTOM_KEY_DOWNLOAD_URL."
-    logger -t $LOG_TAG "Please check network connection, URL, and Web server."
-  fi
+    if [ -f "$TMP_KEY_PATH" ]; then
+        mv "$TMP_KEY_PATH" "$FINAL_KEY_PATH"
+        logger -t $LOG_TAG "Custom opkg public key downloaded and installed to $FINAL_KEY_PATH."
+    else
+        logger -t $LOG_TAG "Error: Failed to download custom opkg public key from $CUSTOM_KEY_DOWNLOAD_URL."
+        logger -t $LOG_TAG "Please check network connection, URL, and Web server."
+    fi
 fi
 
 logger -t $LOG_TAG "Custom opkg public key download script finished."
